@@ -30,10 +30,11 @@ function CandlestickChart({ data }) {
 
   useEffect(() => {
     if (!ref.current) return;
+    setWidth(ref.current.clientWidth);
     const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width));
     ro.observe(ref.current);
     return () => ro.disconnect();
-  }, []);
+  }, [data]);
 
   if (!data?.length) return <div className="h-48 flex items-center justify-center text-c-text2 text-sm">차트 데이터 없음</div>;
 
@@ -115,6 +116,7 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
   const [showTools, setShowTools] = useState(null);
+  const [chartLoading, setChartLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -147,8 +149,13 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   useEffect(() => {
     if (!chartSymbol && portfolio.length > 0) { setChartSymbol(portfolio[0].symbol); return; }
     if (!chartSymbol) return;
+    setChartLoading(true);
+    setChartData([]);
     const tf = TIMEFRAMES.find(t => t.id === chartRange) || TIMEFRAMES[1];
-    fetchChartData(chartSymbol, tf.range, tf.interval).then(d => { if (d.length > 0) setChartData(d); });
+    fetchChartData(chartSymbol, tf.range, tf.interval)
+      .then(d => { if (d.length > 0) setChartData(d); })
+      .catch(() => {})
+      .finally(() => setChartLoading(false));
   }, [chartSymbol, chartRange]);
 
   const items = useMemo(() => portfolio.map(s => {
@@ -210,7 +217,9 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
               </button>
             ))}
           </div>
-          {chartSymbol === stock.symbol && chartData.length > 0 && <CandlestickChart data={chartData} />}
+          {chartSymbol === stock.symbol && chartLoading && <div className="h-48 flex items-center justify-center text-c-text2 text-sm"><RefreshCw size={16} className="animate-spin mr-2" /> 차트 로딩중...</div>}
+          {chartSymbol === stock.symbol && !chartLoading && chartData.length > 0 && <CandlestickChart data={chartData} />}
+          {chartSymbol === stock.symbol && !chartLoading && chartData.length === 0 && <div className="h-48 flex items-center justify-center text-c-text2 text-sm">차트 데이터를 불러올 수 없습니다</div>}
           <div className="flex gap-2 mt-3">
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#1A2E24] border border-[#243D2F] text-[#6EBF8B] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Plus size={16} /> 매수</button>
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#2A1A1C] border border-[#3D2428] text-[#D4808A] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Minus size={16} /> 매도</button>

@@ -1,9 +1,24 @@
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const CORS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+];
+
+async function fetchWithProxy(url) {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (res.ok) return res;
+    } catch {}
+  }
+  return fetch(url);
+}
+
+const CORS_PROXY = CORS_PROXIES[0];
 
 export async function fetchStockPrice(symbol) {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const response = await fetchWithProxy(url);
     const data = await response.json();
     const result = data.chart.result[0];
     const meta = result.meta;
@@ -20,7 +35,7 @@ export async function fetchStockPrice(symbol) {
 export async function fetchChartData(symbol, range = '6mo', interval = '1d') {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const response = await fetchWithProxy(url);
     const data = await response.json();
     const result = data.chart.result[0];
     const timestamps = result.timestamp || [];
@@ -62,7 +77,7 @@ export async function fetchUpbitPrice(market = 'KRW-BTC') {
 export async function searchStock(query) {
   try {
     const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0`;
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const response = await fetchWithProxy(url);
     const data = await response.json();
     return (data.quotes || []).filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF').map(q => ({
       symbol: q.symbol,
