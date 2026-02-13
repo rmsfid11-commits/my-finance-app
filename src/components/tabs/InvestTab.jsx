@@ -317,13 +317,11 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             <div className="flex items-center gap-2.5"><div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: getLogoColor(stock.symbol) }}>{stock.symbol.substring(0, 2)}</div><div><div className="font-bold text-lg text-c-text">{stock.symbol}</div><div className="text-xs text-c-text2">{stock.name}</div></div></div>
             <div className="text-right"><div className="font-bold text-c-text">{H(formatUSD(stock.currentPrice))}</div><div className={`text-xs font-medium ${stock.pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{H(formatPercent(stock.pnlPercent))}</div></div>
           </div>
-          <div className="glass-inner rounded-2xl p-4 mb-4">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-              <div><div className="text-[11px] text-c-text3 mb-0.5">보유수량</div><div className="font-bold text-sm text-c-text"><EditableNumber value={stock.shares} onSave={(v) => setPortfolio(prev => prev.map(s => s.symbol === stock.symbol ? {...s, shares: Math.round(v)} : s))} format={v => `${formatNumber(v)}주`} /></div></div>
-              <div><div className="text-[11px] text-c-text3 mb-0.5">평균단가</div><div className="font-bold text-sm text-c-text">{H(formatUSD(stock.avgPrice))}</div></div>
-              <div><div className="text-[11px] text-c-text3 mb-0.5">평가액</div><div className="font-bold text-sm text-c-text">{H(formatKRW(stock.valueKRW))}</div></div>
-              <div><div className={`text-[11px] mb-0.5 ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>손익</div><div className={`font-bold text-sm ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{H(`${stock.pnlKRW >= 0 ? '+' : ''}${formatKRW(stock.pnlKRW)}`)}</div></div>
-            </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 mb-4">
+            <div><div className="text-[11px] text-c-text3 mb-0.5">보유수량</div><div className="font-bold text-sm text-c-text"><EditableNumber value={stock.shares} onSave={(v) => setPortfolio(prev => prev.map(s => s.symbol === stock.symbol ? {...s, shares: Math.round(v)} : s))} format={v => `${formatNumber(v)}주`} /></div></div>
+            <div><div className="text-[11px] text-c-text3 mb-0.5">평균단가</div><div className="font-bold text-sm text-c-text">{H(formatUSD(stock.avgPrice))}</div></div>
+            <div><div className="text-[11px] text-c-text3 mb-0.5">평가액</div><div className="font-bold text-sm text-c-text">{H(formatKRW(stock.valueKRW))}</div></div>
+            <div><div className={`text-[11px] mb-0.5 ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>손익</div><div className={`font-bold text-sm ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{H(`${stock.pnlKRW >= 0 ? '+' : ''}${formatKRW(stock.pnlKRW)}`)}</div></div>
           </div>
           <IndependentStockChart symbol={stock.symbol} />
           <div className="flex gap-2 mt-3">
