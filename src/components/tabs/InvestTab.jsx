@@ -143,8 +143,8 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
       )}
 
       {showSearch && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
-          <div className="bg-c-card rounded-t-xl p-6 w-full max-w-[640px] animate-slide max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
+          <div className="bg-c-card rounded-xl p-6 w-full max-w-[640px] animate-slide max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg text-c-text">종목 검색</h3>
@@ -184,8 +184,8 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
       )}
 
       {showTradeModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50" onClick={() => setShowTradeModal(null)}>
-          <div className="bg-c-card rounded-t-xl p-6 w-full max-w-[640px] animate-slide" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShowTradeModal(null)}>
+          <div className="bg-c-card rounded-xl p-6 w-full max-w-[640px] animate-slide" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
             <h3 className="font-bold text-lg mb-4 text-c-text">{showTradeModal} 거래</h3>
             <div className="space-y-3">
