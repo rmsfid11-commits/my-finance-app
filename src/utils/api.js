@@ -51,7 +51,7 @@ export async function fetchMarketIndex(symbol) { return fetchStockPrice(symbol);
 
 export async function fetchExchangeRate() {
   try {
-    const response = await fetch('https://open.er-api.com/v6/latest/USD');
+    const response = await fetchWithProxy('https://open.er-api.com/v6/latest/USD');
     const data = await response.json();
     return { rate: data.rates.KRW, timestamp: Date.now() };
   } catch (error) { console.error('Error fetching exchange rate:', error); return null; }
@@ -59,7 +59,7 @@ export async function fetchExchangeRate() {
 
 export async function fetchCryptoPrice(symbol = 'BTCUSDT') {
   try {
-    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
+    const response = await fetchWithProxy(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
     const data = await response.json();
     return { symbol: symbol.replace('USDT', ''), price: parseFloat(data.lastPrice), change: parseFloat(data.priceChange), changePercent: parseFloat(data.priceChangePercent), high: parseFloat(data.highPrice), low: parseFloat(data.lowPrice), volume: parseFloat(data.volume) };
   } catch (error) { console.error(`Error fetching crypto ${symbol}:`, error); return null; }
@@ -67,9 +67,9 @@ export async function fetchCryptoPrice(symbol = 'BTCUSDT') {
 
 export async function fetchUpbitPrice(market = 'KRW-BTC') {
   try {
-    const response = await fetch(`https://api.upbit.com/v1/ticker?markets=${market}`);
+    const response = await fetchWithProxy(`https://api.upbit.com/v1/ticker?markets=${market}`);
     const data = await response.json();
-    const d = data[0];
+    const d = Array.isArray(data) ? data[0] : data;
     return { market, price: d.trade_price, change: d.signed_change_price, changePercent: d.signed_change_rate * 100, high: d.high_price, low: d.low_price };
   } catch (error) { console.error(`Error fetching upbit ${market}:`, error); return null; }
 }

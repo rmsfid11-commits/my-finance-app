@@ -9,11 +9,13 @@ import HouseholdTab from './components/tabs/HouseholdTab';
 import BadgeTab from './components/tabs/BadgeTab';
 import StatsTab from './components/tabs/StatsTab';
 import SettingsTab from './components/tabs/SettingsTab';
-import { Home, TrendingUp, Wallet, Award, BarChart3, Settings } from 'lucide-react';
+import ChartTab from './components/tabs/ChartTab';
+import { Home, TrendingUp, Wallet, Award, BarChart3, Settings, LineChart } from 'lucide-react';
 import { fetchAllMarketData, fetchStockPrice } from './utils/api';
 
 const TABS = [
   { id: 'home', label: '홈', Icon: Home },
+  { id: 'chart', label: '차트', Icon: LineChart },
   { id: 'invest', label: '투자', Icon: TrendingUp },
   { id: 'household', label: '가계부', Icon: Wallet },
   { id: 'badges', label: '배지', Icon: Award },
@@ -33,6 +35,8 @@ function App() {
   const [badges, setBadges] = useLocalStorage('finance_badges', {});
   const [settings, setSettings] = useLocalStorage('finance_settings', { smsAutoDetect: true, notifications: { fixedExpense: true, budgetOver: true, economic: true, badge: true, report: true } });
   const [theme, setTheme] = useLocalStorage('finance_theme', 'black');
+  const [watchlist, setWatchlist] = useLocalStorage('finance_watchlist', []);
+  const [hideAmounts, setHideAmounts] = useLocalStorage('finance_hide_amounts', false);
   const [marketData, setMarketData] = useState({});
   const [stockPrices, setStockPrices] = useState({});
   const [exchangeRate, setExchangeRate] = useState(null);
@@ -53,30 +57,86 @@ function App() {
   const deleteTransaction = useCallback((id) => setTransactions(prev => prev.filter(t => t.id !== id)), [setTransactions]);
 
   const mainRef = useRef(null);
+  const navRef = useRef(null);
+  const [navHeight, setNavHeight] = useState(80);
   const tabIds = TABS.map(t => t.id);
   useSwipe(mainRef, {
     onSwipeLeft: () => setActiveTab(prev => { const i = tabIds.indexOf(prev); return i < tabIds.length - 1 ? tabIds[i + 1] : prev; }),
     onSwipeRight: () => setActiveTab(prev => { const i = tabIds.indexOf(prev); return i > 0 ? tabIds[i - 1] : prev; }),
   });
 
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction };
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const ro = new ResizeObserver(([entry]) => setNavHeight(entry.contentRect.height));
+    ro.observe(nav);
+    setNavHeight(nav.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
+
+  // Glass touch glow effect
+  useEffect(() => {
+    let timeout;
+    const onStart = (e) => {
+      const glass = e.target.closest('.glass');
+      if (!glass) return;
+      const rect = glass.getBoundingClientRect();
+      const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left;
+      const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
+      glass.style.setProperty('--touch-x', `${x}px`);
+      glass.style.setProperty('--touch-y', `${y}px`);
+      glass.classList.add('glass-touched');
+    };
+    const onMove = (e) => {
+      const glass = document.querySelector('.glass-touched');
+      if (!glass) return;
+      const rect = glass.getBoundingClientRect();
+      const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left;
+      const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
+      glass.style.setProperty('--touch-x', `${x}px`);
+      glass.style.setProperty('--touch-y', `${y}px`);
+    };
+    const onEnd = () => {
+      document.querySelectorAll('.glass-touched').forEach(el => {
+        el.classList.remove('glass-touched');
+      });
+    };
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    return () => {
+      document.removeEventListener('touchstart', onStart);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      document.removeEventListener('mousedown', onStart);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, hideAmounts, setHideAmounts };
 
   return (
-    <div className="min-h-screen bg-c-bg pb-44">
+    <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
       <Banner marketData={marketData} exchangeRate={exchangeRate} />
-      <main ref={mainRef} className="px-6 py-3">
+      <main ref={mainRef} className="flex-1 flex flex-col">
         {activeTab === 'home' && <HomeTab {...props} />}
+        {activeTab === 'chart' && <ChartTab {...props} />}
         {activeTab === 'invest' && <InvestTab {...props} />}
         {activeTab === 'household' && <HouseholdTab {...props} />}
         {activeTab === 'badges' && <BadgeTab {...props} />}
         {activeTab === 'stats' && <StatsTab {...props} />}
         {activeTab === 'settings' && <SettingsTab {...props} />}
       </main>
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] bg-c-card/95 backdrop-blur-xl border-t border-c-border flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+      <nav ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] glass-nav flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
         {TABS.map(({ id, label, Icon }) => (
-          <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${activeTab === id ? 'text-[#3182F6]' : 'text-c-text3'}`}>
-            <Icon size={20} strokeWidth={activeTab === id ? 2.5 : 1.5} />
-            <span className={`text-[10px] ${activeTab === id ? 'font-bold' : 'font-medium'}`}>{label}</span>
+          <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all ${activeTab === id ? 'text-[#3182F6]' : 'text-c-text3'}`}>
+            <Icon size={18} strokeWidth={activeTab === id ? 2.5 : 1.5} />
+            <span className={`text-[9px] ${activeTab === id ? 'font-bold' : 'font-medium'}`}>{label}</span>
           </button>
         ))}
       </nav>

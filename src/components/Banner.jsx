@@ -19,10 +19,10 @@ function Banner({ marketData, exchangeRate }) {
   const isDown = current?.change < 0;
 
   return (
-    <div className="bg-c-bg border-b border-c-border text-white px-6 py-3">
+    <div className="glass text-white px-6 py-3">
       <div className="flex items-center justify-between">
         <button onClick={() => setCurrentIndex(p => (p - 1 + items.length) % items.length)} className="p-1 text-c-text2 hover:text-white transition-colors shrink-0"><ChevronLeft size={16} /></button>
-        <div className="led-panel border border-c-border rounded-lg flex-1 mx-3 min-w-0 overflow-hidden">
+        <div className="led-panel rounded-3xl flex-1 mx-3 min-w-0 overflow-hidden">
           {/* 고정 높이: 슬라이드 전환시 레이아웃 시프트 방지 */}
           <div className="h-[72px] flex items-center justify-center">
             <div className="text-center animate-fade w-full px-4" key={currentIndex}>

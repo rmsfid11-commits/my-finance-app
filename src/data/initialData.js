@@ -111,13 +111,13 @@ function generatePeerData() {
 }
 
 export const ECONOMIC_CALENDAR = [
-  { date: '2026-02-14', time: '22:30', name: 'CPI (소비자물가지수)', importance: 5, forecast: '2.8%', previous: '2.9%' },
-  { date: '2026-02-14', time: '22:30', name: 'Core CPI', importance: 4, forecast: '3.1%', previous: '3.2%' },
-  { date: '2026-02-18', time: '22:30', name: 'PPI (생산자물가지수)', importance: 4, forecast: '0.3%', previous: '0.2%' },
-  { date: '2026-02-19', time: '04:00', name: 'FOMC 의사록', importance: 5, forecast: '-', previous: '-' },
-  { date: '2026-02-20', time: '22:30', name: '신규 실업수당 청구건수', importance: 3, forecast: '215K', previous: '218K' },
-  { date: '2026-02-21', time: '23:45', name: 'PMI (구매관리자지수)', importance: 4, forecast: '51.5', previous: '51.2' },
-  { date: '2026-02-25', time: '00:00', name: 'CB 소비자 신뢰지수', importance: 4, forecast: '105.0', previous: '104.1' },
-  { date: '2026-02-27', time: '22:30', name: 'GDP (2차 추정)', importance: 5, forecast: '3.2%', previous: '3.3%' },
-  { date: '2026-02-28', time: '22:30', name: 'PCE 물가지수', importance: 5, forecast: '2.5%', previous: '2.6%' }
+  { date: '2026-02-14', time: '22:30', name: 'CPI (소비자물가지수)', importance: 5, forecast: '2.8%', previous: '2.9%', impact: '물가 상승률 지표. 예상보다 높으면 금리 인상 우려로 주식/코인 하락, 달러 강세. 낮으면 금리 인하 기대로 위험자산 상승.' },
+  { date: '2026-02-14', time: '22:30', name: 'Core CPI', importance: 4, forecast: '3.1%', previous: '3.2%', impact: '식품·에너지 제외 물가. 연준이 가장 주시하는 핵심 인플레이션 지표. 높으면 긴축 장기화 신호.' },
+  { date: '2026-02-18', time: '22:30', name: 'PPI (생산자물가지수)', importance: 4, forecast: '0.3%', previous: '0.2%', impact: '기업 생산 비용 지표. CPI 선행 지표로 활용. 높으면 소비자 물가 상승 압력, 기업 마진 압박.' },
+  { date: '2026-02-19', time: '04:00', name: 'FOMC 의사록', importance: 5, forecast: '-', previous: '-', impact: '연준 위원들의 금리 결정 논의 내용 공개. 매파적 발언 많으면 금리 인상 우려, 비둘기파적이면 시장 상승.' },
+  { date: '2026-02-20', time: '22:30', name: '신규 실업수당 청구건수', importance: 3, forecast: '215K', previous: '218K', impact: '고용시장 건강도 측정. 증가하면 경기 둔화 신호이지만 금리 인하 기대로 주식 상승 가능.' },
+  { date: '2026-02-21', time: '23:45', name: 'PMI (구매관리자지수)', importance: 4, forecast: '51.5', previous: '51.2', impact: '제조업/서비스업 경기 판단. 50 이상이면 확장, 이하면 위축. 경기 방향성의 핵심 선행지표.' },
+  { date: '2026-02-25', time: '00:00', name: 'CB 소비자 신뢰지수', importance: 4, forecast: '105.0', previous: '104.1', impact: '소비자의 경기 체감도. 높으면 소비 증가 기대로 소비재·유통주 상승, 낮으면 경기 침체 우려.' },
+  { date: '2026-02-27', time: '22:30', name: 'GDP (2차 추정)', importance: 5, forecast: '3.2%', previous: '3.3%', impact: '경제 성장률. 예상보다 높으면 기업 실적 기대로 주식 상승, 하지만 과열이면 금리 인상 우려도.' },
+  { date: '2026-02-28', time: '22:30', name: 'PCE 물가지수', importance: 5, forecast: '2.5%', previous: '2.6%', impact: '연준의 공식 물가 목표 지표 (목표 2%). 연준 금리 결정에 가장 직접적 영향. 2%에 근접할수록 금리 인하 기대.' }
 ];

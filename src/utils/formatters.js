@@ -24,7 +24,12 @@ export function formatPercent(value) {
 
 export function formatNumber(num) {
   if (num === null || num === undefined) return '0';
-  return num.toLocaleString('ko-KR');
+  return Number(num).toLocaleString('ko-KR');
+}
+
+export function formatComma(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  return Number(Math.round(num)).toLocaleString('ko-KR');
 }
 
 export function generateId() {
