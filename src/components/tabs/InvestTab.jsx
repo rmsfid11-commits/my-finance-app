@@ -26,7 +26,7 @@ const TIMEFRAMES = [
 
 const LOGO_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3','#FF6B81','#2ED573'];
 const getLogoColor = (sym) => LOGO_COLORS[sym.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
-const PIE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3','#FF6B81','#2ED573'];
+const PIE_COLORS = ['#818CF8','#34D399','#F472B6','#22D3EE','#FBBF24','#C084FC','#60A5FA','#2DD4BF'];
 
 function CrosshairChart({ data }) {
   const ref = useRef(null);
@@ -177,26 +177,32 @@ function IndependentStockChart({ symbol }) {
 
 function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, goals, watchlist, setWatchlist, hideAmounts }) {
   const [subTab, setSubTab] = useState('portfolio');
+  const subTabSelector = (
+    <div className="grid grid-cols-3 gap-1">
+      {SUB_TABS.map(({ id, label }) => (
+        <button key={id} onClick={() => setSubTab(id)} className={`py-3 text-sm font-semibold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
+      ))}
+    </div>
+  );
   return (
     <div className="animate-slide">
-      <div className="glass rounded-3xl p-1.5 mb-5">
-        <div className="grid grid-cols-3 gap-1">
-          {SUB_TABS.map(({ id, label }) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`py-3.5 text-sm font-semibold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
-          ))}
-        </div>
-      </div>
-      {subTab === 'portfolio' && <PortfolioSection portfolio={portfolio} setPortfolio={setPortfolio} stockPrices={stockPrices} exchangeRate={exchangeRate} dividends={dividends} hideAmounts={hideAmounts} />}
-      {subTab === 'exchange' && <ExchangeSection exchangeRate={exchangeRate} portfolio={portfolio} stockPrices={stockPrices} hideAmounts={hideAmounts} />}
-      {subTab === 'crypto' && <CryptoSection exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
-      {subTab === 'calc' && <CalcSection />}
-      {subTab === 'watchlist' && <WatchlistSection watchlist={watchlist} setWatchlist={setWatchlist} exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
-      {subTab === 'calendar' && <CalendarSection />}
+      {subTab === 'portfolio' ? (
+        <PortfolioSection portfolio={portfolio} setPortfolio={setPortfolio} stockPrices={stockPrices} exchangeRate={exchangeRate} dividends={dividends} hideAmounts={hideAmounts} subTabSelector={subTabSelector} />
+      ) : (
+        <>
+          <div className="glass rounded-3xl p-3 mb-5">{subTabSelector}</div>
+          {subTab === 'exchange' && <ExchangeSection exchangeRate={exchangeRate} portfolio={portfolio} stockPrices={stockPrices} hideAmounts={hideAmounts} />}
+          {subTab === 'crypto' && <CryptoSection exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
+          {subTab === 'calc' && <CalcSection />}
+          {subTab === 'watchlist' && <WatchlistSection watchlist={watchlist} setWatchlist={setWatchlist} exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
+          {subTab === 'calendar' && <CalendarSection />}
+        </>
+      )}
     </div>
   );
 }
 
-function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, hideAmounts }) {
+function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, hideAmounts, subTabSelector }) {
   const H = (v) => hideAmounts ? '•••••' : v;
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
@@ -257,6 +263,9 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   return (
     <div>
       <div className="glass flex-1 flex flex-col">
+        {/* 서브탭 */}
+        <div className="p-3">{subTabSelector}</div>
+        <div className="border-t border-c-border mx-5" />
         {/* 총 평가액 */}
         <div className="px-5 py-4">
           <div className="text-sm text-c-text2">총 평가액</div>
@@ -279,13 +288,21 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             <div className="border-t border-c-border mx-5" />
             <div className="px-5 py-4">
               <h3 className="font-bold text-sm text-c-text mb-3">포트폴리오 비중</h3>
-              <div className="flex items-center gap-4">
-                <div className="w-28 h-28">
+              <div className="flex items-center gap-5">
+                <div className="w-32 h-32 shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart><Pie data={items.filter(i => i.valueKRW > 0).map(i => ({ name: i.symbol, value: i.valueKRW }))} cx="50%" cy="50%" innerRadius={28} outerRadius={50} paddingAngle={2} dataKey="value">{items.filter(i => i.valueKRW > 0).map((_, idx) => <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}</Pie></PieChart>
+                    <PieChart><Pie data={items.filter(i => i.valueKRW > 0).map(i => ({ name: i.symbol, value: i.valueKRW }))} cx="50%" cy="50%" innerRadius={32} outerRadius={56} paddingAngle={3} dataKey="value" strokeWidth={0}>{items.filter(i => i.valueKRW > 0).map((_, idx) => <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}</Pie></PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex-1 space-y-1.5">{items.filter(i => i.valueKRW > 0).map((s, idx) => <div key={s.symbol} className="flex items-center gap-2 text-xs"><span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} /><span className="text-c-text font-medium flex-1">{s.symbol}</span><span className="text-c-text2">{hideAmounts ? '•••••' : `${totalV > 0 ? (s.valueKRW / totalV * 100).toFixed(1) : 0}%`}</span></div>)}</div>
+                <div className="flex-1 space-y-2.5">
+                  {items.filter(i => i.valueKRW > 0).map((s, idx) => (
+                    <div key={s.symbol} className="flex items-center gap-2.5">
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
+                      <span className="text-xs text-c-text font-semibold flex-1">{s.symbol}</span>
+                      <span className="text-xs text-c-text2 font-mono tabular-nums">{hideAmounts ? '•••' : `${totalV > 0 ? (s.valueKRW / totalV * 100).toFixed(1) : 0}%`}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>
@@ -300,13 +317,13 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             <div className="flex items-center gap-2.5"><div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: getLogoColor(stock.symbol) }}>{stock.symbol.substring(0, 2)}</div><div><div className="font-bold text-lg text-c-text">{stock.symbol}</div><div className="text-xs text-c-text2">{stock.name}</div></div></div>
             <div className="text-right"><div className="font-bold text-c-text">{H(formatUSD(stock.currentPrice))}</div><div className={`text-xs font-medium ${stock.pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{H(formatPercent(stock.pnlPercent))}</div></div>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 mb-4">
-            <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">보유수량</div><div className="font-bold text-base text-c-text">
-              <EditableNumber value={stock.shares} onSave={(v) => setPortfolio(prev => prev.map(s => s.symbol === stock.symbol ? {...s, shares: Math.round(v)} : s))} format={v => `${formatNumber(v)}주`} />
-            </div></div>
-            <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">평균단가</div><div className="font-bold text-base text-c-text">{H(formatUSD(stock.avgPrice))}</div></div>
-            <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">평가액</div><div className="font-bold text-base text-c-text">{H(formatKRW(stock.valueKRW))}</div></div>
-            <div className="glass-inner rounded-2xl p-4"><div className={`text-xs mb-1 ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>손익</div><div className={`font-bold text-base ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>{H(`${stock.pnlKRW >= 0 ? '+' : ''}${formatKRW(stock.pnlKRW)}`)}</div></div>
+          <div className="glass-inner rounded-2xl p-4 mb-4">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div><div className="text-[11px] text-c-text3 mb-0.5">보유수량</div><div className="font-bold text-sm text-c-text"><EditableNumber value={stock.shares} onSave={(v) => setPortfolio(prev => prev.map(s => s.symbol === stock.symbol ? {...s, shares: Math.round(v)} : s))} format={v => `${formatNumber(v)}주`} /></div></div>
+              <div><div className="text-[11px] text-c-text3 mb-0.5">평균단가</div><div className="font-bold text-sm text-c-text">{H(formatUSD(stock.avgPrice))}</div></div>
+              <div><div className="text-[11px] text-c-text3 mb-0.5">평가액</div><div className="font-bold text-sm text-c-text">{H(formatKRW(stock.valueKRW))}</div></div>
+              <div><div className={`text-[11px] mb-0.5 ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>손익</div><div className={`font-bold text-sm ${stock.pnlKRW >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{H(`${stock.pnlKRW >= 0 ? '+' : ''}${formatKRW(stock.pnlKRW)}`)}</div></div>
+            </div>
           </div>
           <IndependentStockChart symbol={stock.symbol} />
           <div className="flex gap-2 mt-3">
