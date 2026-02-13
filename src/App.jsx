@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useSwipe } from './hooks/useSwipe';
-import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFAULT_DIVIDENDS, DEFAULT_FIXED_EXPENSES, DEFAULT_TRANSACTIONS } from './data/initialData';
+import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFAULT_DIVIDENDS, DEFAULT_FIXED_EXPENSES, DEFAULT_TRANSACTIONS, DEFAULT_QUICK_INPUTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS } from './data/initialData';
 import Banner from './components/Banner';
 import HomeTab from './components/tabs/HomeTab';
 import InvestTab from './components/tabs/InvestTab';
@@ -9,13 +9,11 @@ import HouseholdTab from './components/tabs/HouseholdTab';
 import BadgeTab from './components/tabs/BadgeTab';
 import StatsTab from './components/tabs/StatsTab';
 import SettingsTab from './components/tabs/SettingsTab';
-import ChartTab from './components/tabs/ChartTab';
-import { Home, TrendingUp, Wallet, Award, BarChart3, Settings, LineChart } from 'lucide-react';
+import { Home, TrendingUp, Wallet, Award, BarChart3, Settings } from 'lucide-react';
 import { fetchAllMarketData, fetchStockPrice } from './utils/api';
 
 const TABS = [
   { id: 'home', label: '홈', Icon: Home },
-  { id: 'chart', label: '차트', Icon: LineChart },
   { id: 'invest', label: '투자', Icon: TrendingUp },
   { id: 'household', label: '가계부', Icon: Wallet },
   { id: 'badges', label: '배지', Icon: Award },
@@ -37,6 +35,9 @@ function App() {
   const [theme, setTheme] = useLocalStorage('finance_theme', 'black');
   const [watchlist, setWatchlist] = useLocalStorage('finance_watchlist', []);
   const [hideAmounts, setHideAmounts] = useLocalStorage('finance_hide_amounts', false);
+  const [customQuickInputs, setCustomQuickInputs] = useLocalStorage('finance_quick_inputs', DEFAULT_QUICK_INPUTS);
+  const [customCategories, setCustomCategories] = useLocalStorage('finance_categories', DEFAULT_CATEGORIES);
+  const [paymentMethods, setPaymentMethods] = useLocalStorage('finance_payment_methods', DEFAULT_PAYMENT_METHODS);
   const [marketData, setMarketData] = useState({});
   const [stockPrices, setStockPrices] = useState({});
   const [exchangeRate, setExchangeRate] = useState(null);
@@ -55,6 +56,7 @@ function App() {
 
   const addTransaction = useCallback((tx) => setTransactions(prev => [tx, ...prev]), [setTransactions]);
   const deleteTransaction = useCallback((id) => setTransactions(prev => prev.filter(t => t.id !== id)), [setTransactions]);
+  const updateTransaction = useCallback((id, updates) => setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)), [setTransactions]);
 
   const mainRef = useRef(null);
   const navRef = useRef(null);
@@ -118,14 +120,13 @@ function App() {
     };
   }, []);
 
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, hideAmounts, setHideAmounts };
+  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
       <Banner marketData={marketData} exchangeRate={exchangeRate} />
       <main ref={mainRef} className="flex-1 flex flex-col">
         {activeTab === 'home' && <HomeTab {...props} />}
-        {activeTab === 'chart' && <ChartTab {...props} />}
         {activeTab === 'invest' && <InvestTab {...props} />}
         {activeTab === 'household' && <HouseholdTab {...props} />}
         {activeTab === 'badges' && <BadgeTab {...props} />}
@@ -134,9 +135,9 @@ function App() {
       </main>
       <nav ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] glass-nav flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
         {TABS.map(({ id, label, Icon }) => (
-          <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all ${activeTab === id ? 'text-[#3182F6]' : 'text-c-text3'}`}>
-            <Icon size={18} strokeWidth={activeTab === id ? 2.5 : 1.5} />
-            <span className={`text-[9px] ${activeTab === id ? 'font-bold' : 'font-medium'}`}>{label}</span>
+          <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${activeTab === id ? 'text-[#3182F6]' : 'text-c-text3'}`}>
+            <Icon size={20} strokeWidth={activeTab === id ? 2.5 : 1.5} />
+            <span className={`text-[10px] ${activeTab === id ? 'font-bold' : 'font-medium'}`}>{label}</span>
           </button>
         ))}
       </nav>

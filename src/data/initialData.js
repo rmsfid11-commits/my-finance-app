@@ -12,17 +12,30 @@ export const DEFAULT_FIXED_EXPENSES = [];
 
 export const DEFAULT_TRANSACTIONS = [];
 
-export const CATEGORIES = ['식비', '교통', '생활', '의료', '여가', '강아지', '기타', '주거'];
-export const CATEGORY_ICONS = { '식비': '🍜', '교통': '🚇', '생활': '🏠', '의료': '💊', '여가': '🎮', '강아지': '🐕', '기타': '📦', '주거': '🏢' };
-export const CATEGORY_COLORS = { '식비': '#FF4757', '교통': '#3182F6', '생활': '#00C48C', '의료': '#7C5CFC', '여가': '#FF9F43', '강아지': '#FF6B81', '기타': '#8B95A1', '주거': '#0ABDE3' };
+export const DEFAULT_CATEGORIES = [
+  { name: '식비', icon: '🍜', color: '#FF4757' },
+  { name: '교통', icon: '🚇', color: '#3182F6' },
+  { name: '생활', icon: '🏠', color: '#00C48C' },
+  { name: '의료', icon: '💊', color: '#7C5CFC' },
+  { name: '여가', icon: '🎮', color: '#FF9F43' },
+  { name: '강아지', icon: '🐕', color: '#FF6B81' },
+  { name: '기타', icon: '📦', color: '#8B95A1' },
+  { name: '주거', icon: '🏢', color: '#0ABDE3' },
+];
 
-export const QUICK_INPUTS = [
+export const CATEGORIES = DEFAULT_CATEGORIES.map(c => c.name);
+export const CATEGORY_ICONS = Object.fromEntries(DEFAULT_CATEGORIES.map(c => [c.name, c.icon]));
+export const CATEGORY_COLORS = Object.fromEntries(DEFAULT_CATEGORIES.map(c => [c.name, c.color]));
+
+export const DEFAULT_PAYMENT_METHODS = ['카드', '현금', '체크카드', '계좌이체', '페이'];
+
+export const DEFAULT_QUICK_INPUTS = [
   { label: '점심', amount: 8000, category: '식비', icon: '🍚' },
   { label: '커피', amount: 5000, category: '식비', icon: '☕' },
   { label: '지하철', amount: 3000, category: '교통', icon: '🚇' },
   { label: '저녁', amount: 15000, category: '식비', icon: '🍽️' },
   { label: '강아지', amount: 10000, category: '강아지', icon: '🐕' },
-  { label: '주유', amount: 70000, category: '교통', icon: '⛽' }
+  { label: '주유', amount: 70000, category: '교통', icon: '⛽' },
 ];
 
 export const BADGE_DEFINITIONS = [
