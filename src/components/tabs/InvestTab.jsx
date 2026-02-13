@@ -177,32 +177,29 @@ function IndependentStockChart({ symbol }) {
 
 function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, goals, watchlist, setWatchlist, hideAmounts }) {
   const [subTab, setSubTab] = useState('portfolio');
-  const subTabSelector = (
-    <div className="grid grid-cols-3 gap-1">
-      {SUB_TABS.map(({ id, label }) => (
-        <button key={id} onClick={() => setSubTab(id)} className={`py-3 text-sm font-semibold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
-      ))}
-    </div>
-  );
   return (
     <div className="animate-slide">
-      {subTab === 'portfolio' ? (
-        <PortfolioSection portfolio={portfolio} setPortfolio={setPortfolio} stockPrices={stockPrices} exchangeRate={exchangeRate} dividends={dividends} hideAmounts={hideAmounts} subTabSelector={subTabSelector} />
-      ) : (
-        <>
-          <div className="glass rounded-3xl p-3 mb-5">{subTabSelector}</div>
-          {subTab === 'exchange' && <ExchangeSection exchangeRate={exchangeRate} portfolio={portfolio} stockPrices={stockPrices} hideAmounts={hideAmounts} />}
-          {subTab === 'crypto' && <CryptoSection exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
-          {subTab === 'calc' && <CalcSection />}
-          {subTab === 'watchlist' && <WatchlistSection watchlist={watchlist} setWatchlist={setWatchlist} exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
-          {subTab === 'calendar' && <CalendarSection />}
-        </>
-      )}
+      <div className="glass flex-1 flex flex-col">
+        <div className="p-3">
+          <div className="grid grid-cols-3 gap-1">
+            {SUB_TABS.map(({ id, label }) => (
+              <button key={id} onClick={() => setSubTab(id)} className={`py-3 text-sm font-semibold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-c-border mx-5" />
+        {subTab === 'portfolio' && <PortfolioSection portfolio={portfolio} setPortfolio={setPortfolio} stockPrices={stockPrices} exchangeRate={exchangeRate} dividends={dividends} hideAmounts={hideAmounts} />}
+        {subTab === 'exchange' && <ExchangeSection exchangeRate={exchangeRate} portfolio={portfolio} stockPrices={stockPrices} hideAmounts={hideAmounts} />}
+        {subTab === 'crypto' && <CryptoSection exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
+        {subTab === 'calc' && <CalcSection />}
+        {subTab === 'watchlist' && <WatchlistSection watchlist={watchlist} setWatchlist={setWatchlist} exchangeRate={exchangeRate} hideAmounts={hideAmounts} />}
+        {subTab === 'calendar' && <CalendarSection />}
+      </div>
     </div>
   );
 }
 
-function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, hideAmounts, subTabSelector }) {
+function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, hideAmounts }) {
   const H = (v) => hideAmounts ? '•••••' : v;
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
@@ -261,13 +258,9 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   }, [dividends]);
 
   return (
-    <div>
-      <div className="glass flex-1 flex flex-col">
-        {/* 서브탭 */}
-        <div className="p-3">{subTabSelector}</div>
-        <div className="border-t border-c-border mx-5" />
-        {/* 총 평가액 */}
-        <div className="px-5 py-4">
+    <>
+      {/* 총 평가액 */}
+      <div className="px-5 py-4">
           <div className="text-sm text-c-text2">총 평가액</div>
           <div className="text-2xl font-bold text-[#3182F6]">{hideAmounts ? '•••••' : `${formatComma(totalV)}원`}</div>
           <div className={`text-sm font-semibold ${totalV - totalC >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{hideAmounts ? '•••••' : `${totalV - totalC >= 0 ? '+' : ''}${formatComma(totalV - totalC)}원 (${totalC > 0 ? formatPercent((totalV - totalC) / totalC * 100) : '0%'})`}</div>
@@ -404,8 +397,6 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
         </div>
       )}
 
-      </div>
-
       {showTradeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShowTradeModal(null)}>
           <div className="glass rounded-3xl border border-c-glass-border p-6 w-full max-w-[640px] animate-slide" onClick={e => e.stopPropagation()}>
@@ -422,7 +413,7 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -435,21 +426,22 @@ function ExchangeSection({ exchangeRate, portfolio, stockPrices, hideAmounts }) 
   const totalUSD = portfolio.reduce((s, p) => s + p.shares * (stockPrices[p.symbol]?.price || p.avgPrice), 0);
 
   return (
-    <div className="space-y-4">
-      <div className="glass rounded-3xl p-6 text-center">
+    <>
+      <div className="px-5 py-4 text-center">
         <div className="text-xs font-medium text-c-text2 mb-2">USD/KRW 실시간 환율</div>
         <div className="text-4xl font-extrabold text-[#3182F6] mb-1">{H(`₩${formatComma(rate)}`)}</div>
         <div className="text-xs text-c-text3">{exchangeRate ? '실시간 반영' : '기본값 (API 로딩중)'}</div>
       </div>
-      <div className="glass rounded-3xl p-5">
+      <div className="border-t border-c-border mx-5" />
+      <div className="px-5 py-4">
         <h3 className="font-bold text-base mb-4 text-c-text">환율 계산기</h3>
         <div className="space-y-3">
-          <div><label className="text-sm text-c-text2 font-medium">USD → KRW</label><div className="flex gap-2 items-center"><input type="number" value={usdInput} onChange={e => setUsdInput(e.target.value)} placeholder="$ 입력" className="flex-1" /><span className="text-sm font-bold text-c-text2">=</span><div className="flex-1 glass-inner rounded-2xl p-3 text-sm font-bold text-c-text">{usdInput ? H(`${formatComma(parseFloat(usdInput) * rate)}원`) : '₩0'}</div></div></div>
-          <div><label className="text-sm text-c-text2 font-medium">KRW → USD</label><div className="flex gap-2 items-center"><input type="number" value={krwInput} onChange={e => setKrwInput(e.target.value)} placeholder="₩ 입력" className="flex-1" />{krwInput && <div className="text-xs text-c-text3 absolute mt-10">{H(`${formatComma(krwInput)}원`)}</div>}<span className="text-sm font-bold text-c-text2">=</span><div className="flex-1 glass-inner rounded-2xl p-3 text-sm font-bold text-c-text">{krwInput ? H(formatUSD(parseFloat(krwInput) / rate)) : '$0.00'}</div></div></div>
+          <div><label className="text-sm text-c-text2 font-medium">USD → KRW</label><div className="flex gap-2 items-center"><input type="number" value={usdInput} onChange={e => setUsdInput(e.target.value)} placeholder="$ 입력" className="flex-1" /><span className="text-sm font-bold text-c-text2">=</span><div className="flex-1 text-sm font-bold text-c-text p-3">{usdInput ? H(`${formatComma(parseFloat(usdInput) * rate)}원`) : '₩0'}</div></div></div>
+          <div><label className="text-sm text-c-text2 font-medium">KRW → USD</label><div className="flex gap-2 items-center"><input type="number" value={krwInput} onChange={e => setKrwInput(e.target.value)} placeholder="₩ 입력" className="flex-1" /><span className="text-sm font-bold text-c-text2">=</span><div className="flex-1 text-sm font-bold text-c-text p-3">{krwInput ? H(formatUSD(parseFloat(krwInput) / rate)) : '$0.00'}</div></div></div>
         </div>
       </div>
-      {totalUSD > 0 && <div className="glass rounded-3xl p-5"><h3 className="font-bold text-sm mb-3 text-c-text">내 투자 환율 영향</h3><div className="grid grid-cols-2 gap-3"><div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">해외자산 총액</div><div className="font-bold text-c-text">{H(formatUSD(totalUSD))}</div></div><div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">원화 환산</div><div className="font-bold text-[#3182F6]">{H(`${formatComma(totalUSD * rate)}원`)}</div></div></div><div className="mt-3 bg-[#00C48C]/8 border border-[#00C48C]/15 rounded-xl p-3 text-sm text-[#00C48C]">{H(`환율 1원 상승 시 +${formatComma(totalUSD)}원 변동`)}</div></div>}
-    </div>
+      {totalUSD > 0 && (<><div className="border-t border-c-border mx-5" /><div className="px-5 py-4"><h3 className="font-bold text-sm mb-3 text-c-text">내 투자 환율 영향</h3><div className="grid grid-cols-2 gap-x-6 gap-y-2"><div><div className="text-[11px] text-c-text3 mb-0.5">해외자산 총액</div><div className="font-bold text-c-text">{H(formatUSD(totalUSD))}</div></div><div><div className="text-[11px] text-c-text3 mb-0.5">원화 환산</div><div className="font-bold text-[#3182F6]">{H(`${formatComma(totalUSD * rate)}원`)}</div></div></div><div className="mt-3 bg-[#00C48C]/8 border border-[#00C48C]/15 rounded-xl p-3 text-sm text-[#00C48C]">{H(`환율 1원 상승 시 +${formatComma(totalUSD)}원 변동`)}</div></div></>)}
+    </>
   );
 }
 
@@ -481,31 +473,34 @@ function CryptoSection({ exchangeRate, hideAmounts }) {
   useEffect(() => { loadCrypto(); }, []);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center"><h3 className="font-bold text-base text-c-text">코인 & 김프</h3><button onClick={loadCrypto} className="text-[#3182F6] text-sm flex items-center gap-1.5 font-medium"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 새로고침</button></div>
+    <>
+      <div className="px-5 py-3 flex justify-between items-center"><h3 className="font-bold text-base text-c-text">코인 & 김프</h3><button onClick={loadCrypto} className="text-[#3182F6] text-sm flex items-center gap-1.5 font-medium"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 새로고침</button></div>
       {loading && <div className="text-center py-12 text-c-text2"><RefreshCw size={20} className="animate-spin mx-auto mb-2" />데이터 불러오는 중...</div>}
-      {error && !loading && <div className="bg-[#FF4757]/8 border border-[#FF4757]/15 rounded-2xl p-5 text-center"><div className="text-sm font-semibold text-[#FF4757] mb-1">데이터를 불러올 수 없습니다</div><div className="text-xs text-c-text2">네트워크를 확인하고 새로고침 해주세요</div></div>}
+      {error && !loading && <div className="px-5 py-4"><div className="bg-[#FF4757]/8 border border-[#FF4757]/15 rounded-2xl p-5 text-center"><div className="text-sm font-semibold text-[#FF4757] mb-1">데이터를 불러올 수 없습니다</div><div className="text-xs text-c-text2">네트워크를 확인하고 새로고침 해주세요</div></div></div>}
       {!loading && !error && cryptoData.map(d => (
-        <div key={d.coin} className="glass rounded-3xl p-5">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold ${d.coin === 'BTC' ? 'bg-[#F7931A]' : d.coin === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#00AAE4]'}`}>{d.coin.substring(0, 1)}</div>
-              <div><div className="font-bold text-lg text-c-text">{d.coin}</div><div className={`text-xs font-medium ${d.change24h >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{d.change24h >= 0 ? '+' : ''}{Number(d.change24h).toFixed(2)}% (24h)</div></div>
+        <div key={d.coin}>
+          <div className="border-t border-c-border mx-5" />
+          <div className="px-5 py-4">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold ${d.coin === 'BTC' ? 'bg-[#F7931A]' : d.coin === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#00AAE4]'}`}>{d.coin.substring(0, 1)}</div>
+                <div><div className="font-bold text-lg text-c-text">{d.coin}</div><div className={`text-xs font-medium ${d.change24h >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{d.change24h >= 0 ? '+' : ''}{Number(d.change24h).toFixed(2)}% (24h)</div></div>
+              </div>
+              <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${d.status === '적정' ? 'bg-[#00C48C]/12 text-[#00C48C]' : d.status === '과열' ? 'bg-[#FF4757]/12 text-[#FF4757]' : d.status === '저평가' ? 'bg-[#3182F6]/12 text-[#3182F6]' : 'bg-[#FF9F43]/12 text-[#FF9F43]'}`}>{d.status}</span>
             </div>
-            <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${d.status === '적정' ? 'bg-[#00C48C]/12 text-[#00C48C]' : d.status === '과열' ? 'bg-[#FF4757]/12 text-[#FF4757]' : d.status === '저평가' ? 'bg-[#3182F6]/12 text-[#3182F6]' : 'bg-[#FF9F43]/12 text-[#FF9F43]'}`}>{d.status}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">해외 (Binance)</div><div className="font-bold text-base text-c-text">{H(formatUSD(d.binanceUSD))}</div><div className="text-xs text-c-text3 mt-0.5">{H(`${formatComma(d.binanceKRW)}원`)}</div></div>
-            <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">한국 (Upbit)</div><div className="font-bold text-base text-c-text">{H(`${formatComma(d.upbitKRW)}원`)}</div></div>
-          </div>
-          <div className="mt-2.5 glass-inner rounded-2xl p-4 flex items-center justify-center gap-3">
-            <span className="text-xs font-medium text-c-text2">김치프리미엄</span>
-            <span className={`text-lg font-extrabold ${d.kimchiPercent >= 0 ? 'text-[#FF4757]' : 'text-[#3182F6]'}`}>{d.kimchiPercent >= 0 ? '+' : ''}{d.kimchiPercent.toFixed(2)}%</span>
-            <span className="text-xs text-c-text3">({H(`${d.kimchiAmount >= 0 ? '+' : ''}${formatComma(d.kimchiAmount)}원`)})</span>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div><div className="text-[11px] text-c-text3 mb-0.5">해외 (Binance)</div><div className="font-bold text-sm text-c-text">{H(formatUSD(d.binanceUSD))}</div><div className="text-xs text-c-text3">{H(`${formatComma(d.binanceKRW)}원`)}</div></div>
+              <div><div className="text-[11px] text-c-text3 mb-0.5">한국 (Upbit)</div><div className="font-bold text-sm text-c-text">{H(`${formatComma(d.upbitKRW)}원`)}</div></div>
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="text-xs font-medium text-c-text2">김치프리미엄</span>
+              <span className={`text-lg font-extrabold ${d.kimchiPercent >= 0 ? 'text-[#FF4757]' : 'text-[#3182F6]'}`}>{d.kimchiPercent >= 0 ? '+' : ''}{d.kimchiPercent.toFixed(2)}%</span>
+              <span className="text-xs text-c-text3">({H(`${d.kimchiAmount >= 0 ? '+' : ''}${formatComma(d.kimchiAmount)}원`)})</span>
+            </div>
           </div>
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -514,34 +509,37 @@ function CalcSection() {
   const types = [{ id: 'compound', label: '복리' }, { id: 'breakeven', label: '손익분기' }, { id: 'dividend', label: '배당' }, { id: 'averaging', label: '물타기' }, { id: 'target', label: '목표자산' }];
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1.5 overflow-x-auto pb-2">{types.map(c => <button key={c.id} onClick={() => setCalcType(c.id)} className={`px-4 py-2.5 rounded-xl text-sm whitespace-nowrap font-medium transition-all ${calcType === c.id ? 'bg-[#3182F6] text-white' : 'glass-inner text-c-text2'}`}>{c.label}</button>)}</div>
+    <>
+      <div className="px-5 py-3">
+        <div className="flex gap-1.5 overflow-x-auto">{types.map(c => <button key={c.id} onClick={() => setCalcType(c.id)} className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap font-medium transition-all ${calcType === c.id ? 'bg-[#3182F6] text-white' : 'text-c-text2'}`}>{c.label}</button>)}</div>
+      </div>
+      <div className="border-t border-c-border mx-5" />
       {calcType === 'compound' && <CompoundCalc />}
       {calcType === 'breakeven' && <BreakevenCalc />}
       {calcType === 'dividend' && <DividendCalc />}
       {calcType === 'averaging' && <AveragingCalc />}
       {calcType === 'target' && <TargetCalc />}
-    </div>
+    </>
   );
 }
 
 function CompoundCalc() {
   const [init, setInit] = useState('10000000'); const [mo, setMo] = useState('2000000'); const [r, setR] = useState('10'); const [y, setY] = useState('10');
   const result = useMemo(() => { const p = parseFloat(init)||0, m = parseFloat(mo)||0, rate = (parseFloat(r)||0)/100, n = (parseInt(y)||0)*12; let t = p; for(let i=0;i<n;i++) t = t*(1+rate/12)+m; return { total: t, profit: t-(p+m*n), invested: p+m*n }; }, [init,mo,r,y]);
-  return (<div className="glass rounded-3xl p-5 space-y-3"><h3 className="font-bold text-base text-c-text">복리 계산기</h3><div><label className="text-sm text-c-text2 font-medium">초기 투자금</label><input type="number" value={init} onChange={e=>setInit(e.target.value)} />{init && <div className="text-xs text-c-text3 mt-1">{formatComma(init)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">월 적립액</label><input type="number" value={mo} onChange={e=>setMo(e.target.value)} />{mo && <div className="text-xs text-c-text3 mt-1">{formatComma(mo)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">연 수익률 (%)</label><input type="number" value={r} onChange={e=>setR(e.target.value)} /></div><div><label className="text-sm text-c-text2 font-medium">기간 (년)</label><input type="number" value={y} onChange={e=>setY(e.target.value)} /></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">최종 금액</span><span className="font-bold text-[#3182F6]">{formatComma(result.total)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">총 투자금</span><span className="font-medium text-c-text">{formatComma(result.invested)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">수익금</span><span className="font-bold text-green-500">+{formatComma(result.profit)}원</span></div></div></div>);
+  return (<div className="px-5 py-4 space-y-3"><h3 className="font-bold text-base text-c-text">복리 계산기</h3><div><label className="text-sm text-c-text2 font-medium">초기 투자금</label><input type="number" value={init} onChange={e=>setInit(e.target.value)} />{init && <div className="text-xs text-c-text3 mt-1">{formatComma(init)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">월 적립액</label><input type="number" value={mo} onChange={e=>setMo(e.target.value)} />{mo && <div className="text-xs text-c-text3 mt-1">{formatComma(mo)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">연 수익률 (%)</label><input type="number" value={r} onChange={e=>setR(e.target.value)} /></div><div><label className="text-sm text-c-text2 font-medium">기간 (년)</label><input type="number" value={y} onChange={e=>setY(e.target.value)} /></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">최종 금액</span><span className="font-bold text-[#3182F6]">{formatComma(result.total)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">총 투자금</span><span className="font-medium text-c-text">{formatComma(result.invested)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">수익금</span><span className="font-bold text-green-500">+{formatComma(result.profit)}원</span></div></div></div>);
 }
 
 function BreakevenCalc() {
   const [buy, setBuy] = useState(''); const [cur, setCur] = useState('');
   const pnl = buy && cur ? ((parseFloat(cur)-parseFloat(buy))/parseFloat(buy)*100) : 0;
   const need = buy && cur && parseFloat(cur) < parseFloat(buy) ? ((parseFloat(buy)-parseFloat(cur))/parseFloat(cur)*100) : 0;
-  return (<div className="glass rounded-3xl p-5 space-y-3"><h3 className="font-bold text-base text-c-text">손익분기점 계산기</h3><div><label className="text-sm text-c-text2 font-medium">매수가</label><input type="number" value={buy} onChange={e=>setBuy(e.target.value)} placeholder="매수가" /></div><div><label className="text-sm text-c-text2 font-medium">현재가</label><input type="number" value={cur} onChange={e=>setCur(e.target.value)} placeholder="현재가" /></div>{buy&&cur&&<div className="glass-inner rounded-2xl p-4"><div className="flex justify-between text-sm"><span className="text-c-text2">현재 수익률</span><span className={`font-bold ${pnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(pnl)}</span></div>{need>0&&<div className="flex justify-between text-sm mt-1"><span className="text-c-text2">본전까지</span><span className="font-bold text-orange-500">+{need.toFixed(2)}%</span></div>}</div>}</div>);
+  return (<div className="px-5 py-4 space-y-3"><h3 className="font-bold text-base text-c-text">손익분기점 계산기</h3><div><label className="text-sm text-c-text2 font-medium">매수가</label><input type="number" value={buy} onChange={e=>setBuy(e.target.value)} placeholder="매수가" /></div><div><label className="text-sm text-c-text2 font-medium">현재가</label><input type="number" value={cur} onChange={e=>setCur(e.target.value)} placeholder="현재가" /></div>{buy&&cur&&<div className="glass-inner rounded-2xl p-4"><div className="flex justify-between text-sm"><span className="text-c-text2">현재 수익률</span><span className={`font-bold ${pnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(pnl)}</span></div>{need>0&&<div className="flex justify-between text-sm mt-1"><span className="text-c-text2">본전까지</span><span className="font-bold text-orange-500">+{need.toFixed(2)}%</span></div>}</div>}</div>);
 }
 
 function DividendCalc() {
   const [amt, setAmt] = useState('100000000'); const [dr, setDr] = useState('5'); const [tgt, setTgt] = useState('5000000');
   const annual = (parseFloat(amt)||0)*(parseFloat(dr)||0)/100; const monthly = annual/12; const needed = (parseFloat(tgt)||0)*12/((parseFloat(dr)||1)/100);
-  return (<div className="glass rounded-3xl p-5 space-y-3"><h3 className="font-bold text-base text-c-text">배당 계산기</h3><div><label className="text-sm text-c-text2 font-medium">투자금</label><input type="number" value={amt} onChange={e=>setAmt(e.target.value)} />{amt && <div className="text-xs text-c-text3 mt-1">{formatComma(amt)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">배당률 (%)</label><input type="number" value={dr} onChange={e=>setDr(e.target.value)} /></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">연 배당</span><span className="font-bold text-c-text">{formatComma(annual)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">월 배당</span><span className="font-bold text-green-500">{formatComma(monthly)}원</span></div></div><div className="border-t border-c-border pt-3"><div><label className="text-sm text-c-text2 font-medium">목표 월 배당</label><input type="number" value={tgt} onChange={e=>setTgt(e.target.value)} />{tgt && <div className="text-xs text-c-text3 mt-1">{formatComma(tgt)}원</div>}</div><div className="glass-inner rounded-2xl p-4 mt-2"><div className="flex justify-between text-sm"><span className="text-c-text2">필요 투자금</span><span className="font-bold text-[#3182F6]">{formatComma(needed)}원</span></div></div></div></div>);
+  return (<div className="px-5 py-4 space-y-3"><h3 className="font-bold text-base text-c-text">배당 계산기</h3><div><label className="text-sm text-c-text2 font-medium">투자금</label><input type="number" value={amt} onChange={e=>setAmt(e.target.value)} />{amt && <div className="text-xs text-c-text3 mt-1">{formatComma(amt)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">배당률 (%)</label><input type="number" value={dr} onChange={e=>setDr(e.target.value)} /></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">연 배당</span><span className="font-bold text-c-text">{formatComma(annual)}원</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">월 배당</span><span className="font-bold text-green-500">{formatComma(monthly)}원</span></div></div><div className="border-t border-c-border pt-3"><div><label className="text-sm text-c-text2 font-medium">목표 월 배당</label><input type="number" value={tgt} onChange={e=>setTgt(e.target.value)} />{tgt && <div className="text-xs text-c-text3 mt-1">{formatComma(tgt)}원</div>}</div><div className="glass-inner rounded-2xl p-4 mt-2"><div className="flex justify-between text-sm"><span className="text-c-text2">필요 투자금</span><span className="font-bold text-[#3182F6]">{formatComma(needed)}원</span></div></div></div></div>);
 }
 
 function AveragingCalc() {
@@ -550,7 +548,7 @@ function AveragingCalc() {
   const na = ts > 0 ? ((parseInt(cs)||0)*(parseFloat(ca)||0)+(parseInt(as2)||0)*(parseFloat(ap)||0))/ts : 0;
   const curPnl = ((parseFloat(cp)||0)-(parseFloat(ca)||0))/(parseFloat(ca)||1)*100;
   const newPnl = ((parseFloat(cp)||0)-na)/(na||1)*100;
-  return (<div className="glass rounded-3xl p-5 space-y-3"><h3 className="font-bold text-base text-c-text">물타기 계산기</h3><div className="grid grid-cols-2 gap-2"><div><label className="text-sm text-c-text2 font-medium">현재 수량</label><input type="number" value={cs} onChange={e=>setCs(e.target.value)} />{cs && <div className="text-xs text-c-text3 mt-1">{formatComma(cs)}주</div>}</div><div><label className="text-sm text-c-text2 font-medium">평균단가</label><input type="number" step="0.01" value={ca} onChange={e=>setCa(e.target.value)} /></div></div><div><label className="text-sm text-c-text2 font-medium">현재가</label><input type="number" step="0.01" value={cp} onChange={e=>setCp(e.target.value)} /></div><div className="border-t border-c-border pt-3"><div className="text-xs font-bold text-c-text2 mb-2">추가 매수</div><div className="grid grid-cols-2 gap-2"><div><label className="text-sm text-c-text2 font-medium">추가 수량</label><input type="number" value={as2} onChange={e=>setAs(e.target.value)} />{as2 && <div className="text-xs text-c-text3 mt-1">{formatComma(as2)}주</div>}</div><div><label className="text-sm text-c-text2 font-medium">매수 가격</label><input type="number" step="0.01" value={ap} onChange={e=>setAp(e.target.value)} /></div></div></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">현재 평단</span><span className="font-semibold text-c-text">{formatUSD(parseFloat(ca))}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">새 평단</span><span className="font-bold text-[#3182F6]">{formatUSD(na)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">현재 수익률</span><span className={`font-semibold ${curPnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(curPnl)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">물타기 후</span><span className={`font-bold ${newPnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(newPnl)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">총 수량</span><span className="font-semibold text-c-text">{formatComma(ts)}주</span></div></div><div className="bg-[#FF4757]/8 border border-[#FF4757]/15 rounded-xl p-3"><div className="text-xs font-bold text-[#FF4757] mb-1">주의사항</div><ul className="text-xs text-[#FF4757]/80 space-y-0.5"><li>• 물타기는 추가 손실 위험이 있습니다</li><li>• 단계적 분할 매수를 권장합니다</li></ul></div></div>);
+  return (<div className="px-5 py-4 space-y-3"><h3 className="font-bold text-base text-c-text">물타기 계산기</h3><div className="grid grid-cols-2 gap-2"><div><label className="text-sm text-c-text2 font-medium">현재 수량</label><input type="number" value={cs} onChange={e=>setCs(e.target.value)} />{cs && <div className="text-xs text-c-text3 mt-1">{formatComma(cs)}주</div>}</div><div><label className="text-sm text-c-text2 font-medium">평균단가</label><input type="number" step="0.01" value={ca} onChange={e=>setCa(e.target.value)} /></div></div><div><label className="text-sm text-c-text2 font-medium">현재가</label><input type="number" step="0.01" value={cp} onChange={e=>setCp(e.target.value)} /></div><div className="border-t border-c-border pt-3"><div className="text-xs font-bold text-c-text2 mb-2">추가 매수</div><div className="grid grid-cols-2 gap-2"><div><label className="text-sm text-c-text2 font-medium">추가 수량</label><input type="number" value={as2} onChange={e=>setAs(e.target.value)} />{as2 && <div className="text-xs text-c-text3 mt-1">{formatComma(as2)}주</div>}</div><div><label className="text-sm text-c-text2 font-medium">매수 가격</label><input type="number" step="0.01" value={ap} onChange={e=>setAp(e.target.value)} /></div></div></div><div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">현재 평단</span><span className="font-semibold text-c-text">{formatUSD(parseFloat(ca))}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">새 평단</span><span className="font-bold text-[#3182F6]">{formatUSD(na)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">현재 수익률</span><span className={`font-semibold ${curPnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(curPnl)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">물타기 후</span><span className={`font-bold ${newPnl>=0?'text-green-500':'text-red-500'}`}>{formatPercent(newPnl)}</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">총 수량</span><span className="font-semibold text-c-text">{formatComma(ts)}주</span></div></div><div className="bg-[#FF4757]/8 border border-[#FF4757]/15 rounded-xl p-3"><div className="text-xs font-bold text-[#FF4757] mb-1">주의사항</div><ul className="text-xs text-[#FF4757]/80 space-y-0.5"><li>• 물타기는 추가 손실 위험이 있습니다</li><li>• 단계적 분할 매수를 권장합니다</li></ul></div></div>);
 }
 
 function TargetCalc() {
@@ -562,7 +560,7 @@ function TargetCalc() {
     const d=new Date(); d.setMonth(d.getMonth()+months);
     return { months, years: (months/12).toFixed(1), date: d.toLocaleDateString('ko-KR') };
   }, [t,c,m,r]);
-  return (<div className="glass rounded-3xl p-5 space-y-3"><h3 className="font-bold text-base text-c-text">목표 자산 계산기</h3><div><label className="text-sm text-c-text2 font-medium">목표 금액</label><input type="number" value={t} onChange={e=>setT(e.target.value)} />{t && <div className="text-xs text-c-text3 mt-1">{formatComma(t)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">현재 자산</label><input type="number" value={c} onChange={e=>setC(e.target.value)} />{c && <div className="text-xs text-c-text3 mt-1">{formatComma(c)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">월 저축액</label><input type="number" value={m} onChange={e=>setM(e.target.value)} />{m && <div className="text-xs text-c-text3 mt-1">{formatComma(m)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">연 수익률 (%)</label><input type="number" value={r} onChange={e=>setR(e.target.value)} /></div>{result&&<div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">달성 기간</span><span className="font-bold text-purple-400">{result.years}년 ({result.months}개월)</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">예상 달성일</span><span className="font-semibold text-c-text">{result.date}</span></div></div>}</div>);
+  return (<div className="px-5 py-4 space-y-3"><h3 className="font-bold text-base text-c-text">목표 자산 계산기</h3><div><label className="text-sm text-c-text2 font-medium">목표 금액</label><input type="number" value={t} onChange={e=>setT(e.target.value)} />{t && <div className="text-xs text-c-text3 mt-1">{formatComma(t)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">현재 자산</label><input type="number" value={c} onChange={e=>setC(e.target.value)} />{c && <div className="text-xs text-c-text3 mt-1">{formatComma(c)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">월 저축액</label><input type="number" value={m} onChange={e=>setM(e.target.value)} />{m && <div className="text-xs text-c-text3 mt-1">{formatComma(m)}원</div>}</div><div><label className="text-sm text-c-text2 font-medium">연 수익률 (%)</label><input type="number" value={r} onChange={e=>setR(e.target.value)} /></div>{result&&<div className="glass-inner rounded-2xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-c-text2">달성 기간</span><span className="font-bold text-purple-400">{result.years}년 ({result.months}개월)</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">예상 달성일</span><span className="font-semibold text-c-text">{result.date}</span></div></div>}</div>);
 }
 
 function StockAveragingCalc({ stock }) {
@@ -671,16 +669,19 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
   }, [watchlist]);
 
   return (
-    <div className="space-y-4">
-      <button onClick={() => setShowSearch(true)} className="w-full glass rounded-3xl border border-dashed border-c-border p-5 flex items-center justify-center gap-2 text-[#3182F6] font-semibold text-base">
-        <Eye size={20} /> 관심종목 추가
-      </button>
+    <>
+      <div className="px-5 py-3">
+        <button onClick={() => setShowSearch(true)} className="w-full border border-dashed border-c-border rounded-2xl p-3.5 flex items-center justify-center gap-2 text-[#3182F6] font-semibold text-sm hover:bg-c-subtle transition-colors">
+          <Eye size={16} /> 관심종목 추가
+        </button>
+      </div>
 
       {watchlist.map(stock => {
         const price = prices[stock.symbol];
         return (
-          <div key={stock.symbol} className="glass rounded-3xl p-5">
-            <div className="flex items-center gap-3">
+          <div key={stock.symbol}>
+            <div className="border-t border-c-border mx-5" />
+            <div className="px-5 py-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: getLogoColor(stock.symbol) }}>{stock.symbol.substring(0, 2)}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-base text-c-text">{stock.symbol}</div>
@@ -701,7 +702,7 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
       })}
 
       {watchlist.length === 0 && !showSearch && (
-        <div className="text-center py-12 text-c-text2">
+        <div className="text-center py-12 text-c-text2 px-5">
           <Eye size={32} className="mx-auto mb-3 text-c-text3" />
           <div className="text-sm">관심 종목을 추가해보세요</div>
           <div className="text-xs text-c-text3 mt-1">보유하지 않아도 가격을 추적할 수 있어요</div>
@@ -733,7 +734,7 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -774,7 +775,7 @@ function CalendarSection() {
     );
   };
 
-  return (<div className="space-y-4"><div className="glass rounded-3xl p-5"><h3 className="font-bold text-base mb-4 text-c-text">이번주 주요 지표</h3>{thisWeek.length > 0 ? thisWeek.map(renderEvent) : <div className="text-sm text-c-text2 text-center py-6">이번주 일정 없음</div>}</div><div className="glass rounded-3xl p-5"><h3 className="font-bold text-base mb-4 text-c-text">다음주 일정</h3>{nextWeek.length > 0 ? nextWeek.map(renderEvent) : <div className="text-sm text-c-text2 text-center py-6">다음주 일정 없음</div>}</div></div>);
+  return (<><div className="px-5 py-4"><h3 className="font-bold text-base mb-4 text-c-text">이번주 주요 지표</h3>{thisWeek.length > 0 ? thisWeek.map(renderEvent) : <div className="text-sm text-c-text2 text-center py-6">이번주 일정 없음</div>}</div><div className="border-t border-c-border mx-5" /><div className="px-5 py-4"><h3 className="font-bold text-base mb-4 text-c-text">다음주 일정</h3>{nextWeek.length > 0 ? nextWeek.map(renderEvent) : <div className="text-sm text-c-text2 text-center py-6">다음주 일정 없음</div>}</div></>);
 }
 
 export default InvestTab;
