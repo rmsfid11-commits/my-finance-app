@@ -137,12 +137,15 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   const addStock = (stock) => {
     if (portfolio.some(s => s.symbol === stock.symbol)) return;
     setPortfolio(prev => [...prev, { symbol: stock.symbol, name: stock.name, shares: 0, avgPrice: 0, currency: 'USD', transactions: [] }]);
+    setChartSymbol(stock.symbol);
+    setChartRange('1d');
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
   };
 
   useEffect(() => {
+    if (!chartSymbol && portfolio.length > 0) { setChartSymbol(portfolio[0].symbol); return; }
     if (!chartSymbol) return;
     const tf = TIMEFRAMES.find(t => t.id === chartRange) || TIMEFRAMES[1];
     fetchChartData(chartSymbol, tf.range, tf.interval).then(d => { if (d.length > 0) setChartData(d); });
