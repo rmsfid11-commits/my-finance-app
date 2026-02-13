@@ -28,10 +28,10 @@ const LOGO_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3'
 const getLogoColor = (sym) => LOGO_COLORS[sym.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
 const PIE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3','#FF6B81','#2ED573'];
 
-function CandlestickChart({ data }) {
+function CrosshairChart({ data }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
-  const [tip, setTip] = useState(null);
+  const [crosshair, setCrosshair] = useState(null);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -41,58 +41,137 @@ function CandlestickChart({ data }) {
     return () => ro.disconnect();
   }, [data]);
 
-  if (!data?.length) return <div className="h-48 flex items-center justify-center text-c-text2 text-sm">차트 데이터 없음</div>;
+  if (!data?.length) return <div className="h-64 flex items-center justify-center text-c-text2 text-sm">차트 데이터 없음</div>;
 
-  const h = 200, padT = 20, padB = 24;
+  const h = 280, padT = 24, padB = 28, padR = 58;
+  const chartW = width - padR;
   const cH = h - padT - padB;
   const allP = data.flatMap(d => [d.high, d.low]).filter(Boolean);
   const minP = Math.min(...allP), maxP = Math.max(...allP), rng = maxP - minP || 1;
   const yPos = (p) => padT + cH * (1 - (p - minP) / rng);
-  const step = width / data.length;
+  const priceAtY = (y) => maxP - ((y - padT) / cH) * rng;
+  const step = chartW / data.length;
   const bw = Math.max(1.5, Math.min(8, step * 0.65));
 
-  const handleInteraction = (clientX) => {
+  const handleInteraction = (clientX, clientY) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const idx = Math.min(data.length - 1, Math.max(0, Math.floor((clientX - rect.left) / step)));
-    setTip(data[idx]);
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const idx = Math.min(data.length - 1, Math.max(0, Math.floor(x / step)));
+    const candle = data[idx];
+    const price = priceAtY(Math.max(padT, Math.min(padT + cH, y)));
+    const candleX = step * idx + step / 2;
+    setCrosshair({ x: candleX, y: Math.max(padT, Math.min(padT + cH, y)), candle, price });
   };
 
   return (
-    <div ref={ref} className="relative h-[200px] touch-none"
-      onTouchMove={e => handleInteraction(e.touches[0].clientX)}
-      onTouchEnd={() => setTip(null)}
-      onMouseMove={e => handleInteraction(e.clientX)}
-      onMouseLeave={() => setTip(null)}>
-      {tip && (
-        <div className="absolute top-0 left-0 right-0 bg-c-bg/95 border border-c-border rounded-lg px-3 py-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono z-10">
-          <span className="text-c-text2">{tip.date}</span>
-          <span>O <span className="text-c-text font-semibold">{tip.open?.toFixed(2)}</span></span>
-          <span>H <span className="text-green-500 font-semibold">{tip.high?.toFixed(2)}</span></span>
-          <span>L <span className="text-red-500 font-semibold">{tip.low?.toFixed(2)}</span></span>
-          <span>C <span className={`font-semibold ${tip.close >= tip.open ? 'text-green-500' : 'text-red-500'}`}>{tip.close?.toFixed(2)}</span></span>
+    <div ref={ref} className="relative touch-none select-none"
+      onTouchStart={e => handleInteraction(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchMove={e => { e.preventDefault(); handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }}
+      onTouchEnd={() => setCrosshair(null)}
+      onMouseMove={e => handleInteraction(e.clientX, e.clientY)}
+      onMouseLeave={() => setCrosshair(null)}>
+
+      {crosshair?.candle && (
+        <div className="absolute top-0 left-0 right-0 flex flex-wrap gap-x-2.5 text-[10px] font-mono z-10 px-0.5 pointer-events-none">
+          <span className="text-c-text2">{crosshair.candle.date}</span>
+          <span>O <span className="text-c-text font-semibold">{crosshair.candle.open?.toFixed(2)}</span></span>
+          <span>H <span className="text-[#00C48C] font-semibold">{crosshair.candle.high?.toFixed(2)}</span></span>
+          <span>L <span className="text-[#FF4757] font-semibold">{crosshair.candle.low?.toFixed(2)}</span></span>
+          <span>C <span className={`font-semibold ${crosshair.candle.close >= crosshair.candle.open ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{crosshair.candle.close?.toFixed(2)}</span></span>
         </div>
       )}
+
       {width > 0 && (
-        <svg width={width} height={h}>
+        <svg width={width} height={h} className="overflow-visible">
           {[0, 0.25, 0.5, 0.75, 1].map(pct => {
-            const yy = padT + cH * pct, price = maxP - rng * pct;
-            return (<g key={pct}><line x1={0} y1={yy} x2={width} y2={yy} stroke="var(--color-border,#30363D)" strokeWidth={0.5} opacity={0.4} /><text x={width - 4} y={yy - 4} textAnchor="end" fill="#8B949E" fontSize={9}>{price.toFixed(2)}</text></g>);
+            const yy = padT + cH * pct;
+            const price = maxP - rng * pct;
+            return (
+              <g key={pct}>
+                <line x1={0} y1={yy} x2={chartW} y2={yy} stroke="var(--c-border)" strokeWidth={0.5} opacity={0.4} />
+                <text x={width - 3} y={yy + 3} textAnchor="end" fill="var(--c-text3)" fontSize={9}>{price.toFixed(2)}</text>
+              </g>
+            );
           })}
-          {data.map((d, i) => {
-            if (!d.open || !d.close || !d.high || !d.low) return null;
-            const cx = step * i + step / 2, isUp = d.close >= d.open;
-            const color = isUp ? '#00C48C' : '#FF4757';
-            const bTop = yPos(Math.max(d.open, d.close)), bBot = yPos(Math.min(d.open, d.close));
-            return (<g key={i}><line x1={cx} y1={yPos(d.high)} x2={cx} y2={yPos(d.low)} stroke={color} strokeWidth={1} /><rect x={cx - bw / 2} y={bTop} width={bw} height={Math.max(1, bBot - bTop)} fill={color} rx={0.5} /></g>);
-          })}
+
           {data.filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0).map((d) => {
             const idx = data.indexOf(d);
-            return <text key={idx} x={step * idx + step / 2} y={h - 5} textAnchor="middle" fill="#8B949E" fontSize={9}>{d.date}</text>;
+            return <text key={idx} x={step * idx + step / 2} y={h - 4} textAnchor="middle" fill="var(--c-text3)" fontSize={9}>{d.date}</text>;
           })}
+
+          {data.map((d, i) => {
+            if (!d.open || !d.close || !d.high || !d.low) return null;
+            const cx = step * i + step / 2;
+            const isUp = d.close >= d.open;
+            const color = isUp ? '#00C48C' : '#FF4757';
+            const bTop = yPos(Math.max(d.open, d.close));
+            const bBot = yPos(Math.min(d.open, d.close));
+            return (
+              <g key={i}>
+                <line x1={cx} y1={yPos(d.high)} x2={cx} y2={yPos(d.low)} stroke={color} strokeWidth={1} />
+                <rect x={cx - bw / 2} y={bTop} width={bw} height={Math.max(1, bBot - bTop)} fill={color} rx={0.5} />
+              </g>
+            );
+          })}
+
+          {crosshair && (
+            <>
+              <line x1={crosshair.x} y1={padT} x2={crosshair.x} y2={padT + cH} stroke="var(--c-text2)" strokeWidth={0.5} strokeDasharray="4,3" opacity={0.7} />
+              <line x1={0} y1={crosshair.y} x2={chartW} y2={crosshair.y} stroke="var(--c-text2)" strokeWidth={0.5} strokeDasharray="4,3" opacity={0.7} />
+              <rect x={chartW + 1} y={crosshair.y - 10} width={padR - 3} height={20} fill="var(--c-text2)" rx={4} />
+              <text x={chartW + padR / 2} y={crosshair.y + 4} textAnchor="middle" fill="var(--c-bg)" fontSize={9} fontWeight="700">{crosshair.price.toFixed(2)}</text>
+              {crosshair.candle && (
+                <>
+                  <rect x={crosshair.x - 28} y={padT + cH + 3} width={56} height={17} fill="var(--c-text2)" rx={4} />
+                  <text x={crosshair.x} y={padT + cH + 14} textAnchor="middle" fill="var(--c-bg)" fontSize={8} fontWeight="700">{crosshair.candle.date}</text>
+                </>
+              )}
+              {crosshair.candle && (
+                <circle cx={crosshair.x} cy={yPos(crosshair.candle.close)} r={3.5}
+                  fill={crosshair.candle.close >= crosshair.candle.open ? '#00C48C' : '#FF4757'}
+                  stroke="var(--c-bg)" strokeWidth={2} />
+              )}
+            </>
+          )}
         </svg>
       )}
     </div>
+  );
+}
+
+function IndependentStockChart({ symbol }) {
+  const [timeframe, setTimeframe] = useState('1d');
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setChartData([]);
+    const tf = TIMEFRAMES.find(t => t.id === timeframe) || TIMEFRAMES[1];
+    fetchChartData(symbol, tf.range, tf.interval)
+      .then(d => { if (d.length > 0) setChartData(d); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [symbol, timeframe]);
+
+  return (
+    <>
+      <div className="flex gap-1 mb-3">
+        {TIMEFRAMES.map(tf => (
+          <button key={tf.id} onClick={() => setTimeframe(tf.id)}
+            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+              timeframe === tf.id ? 'bg-[#3182F6] text-white' : 'glass-inner text-c-text2'
+            }`}>
+            {tf.label}
+          </button>
+        ))}
+      </div>
+      {loading && <div className="h-[280px] flex items-center justify-center text-c-text2 text-sm"><RefreshCw size={14} className="animate-spin mr-2" /> 차트 로딩중...</div>}
+      {!loading && chartData.length > 0 && <CrosshairChart data={chartData} />}
+      {!loading && chartData.length === 0 && <div className="h-[280px] flex items-center justify-center text-c-text2 text-sm">차트 데이터를 불러올 수 없습니다</div>}
+    </>
   );
 }
 
@@ -119,13 +198,9 @@ function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividen
 
 function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, hideAmounts }) {
   const H = (v) => hideAmounts ? '•••••' : v;
-  const [chartSymbol, setChartSymbol] = useState(null);
-  const [chartRange, setChartRange] = useState('1d');
-  const [chartData, setChartData] = useState([]);
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
   const [showTools, setShowTools] = useState(null);
-  const [chartLoading, setChartLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -148,24 +223,10 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   const addStock = (stock) => {
     if (portfolio.some(s => s.symbol === stock.symbol)) return;
     setPortfolio(prev => [...prev, { symbol: stock.symbol, name: stock.name, shares: 0, avgPrice: 0, currency: 'USD', transactions: [] }]);
-    setChartSymbol(stock.symbol);
-    setChartRange('1d');
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
   };
-
-  useEffect(() => {
-    if (!chartSymbol && portfolio.length > 0) { setChartSymbol(portfolio[0].symbol); return; }
-    if (!chartSymbol) return;
-    setChartLoading(true);
-    setChartData([]);
-    const tf = TIMEFRAMES.find(t => t.id === chartRange) || TIMEFRAMES[1];
-    fetchChartData(chartSymbol, tf.range, tf.interval)
-      .then(d => { if (d.length > 0) setChartData(d); })
-      .catch(() => {})
-      .finally(() => setChartLoading(false));
-  }, [chartSymbol, chartRange]);
 
   const items = useMemo(() => portfolio.map(s => {
     const price = stockPrices[s.symbol]?.price || s.avgPrice;
@@ -194,33 +255,47 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
   }, [dividends]);
 
   return (
-    <div className="space-y-4">
-      <div className="glass rounded-3xl p-5">
-        <div className="text-sm text-c-text2">총 평가액</div>
-        <div className="text-2xl font-bold text-[#3182F6]">{hideAmounts ? '•••••' : `${formatComma(totalV)}원`}</div>
-        <div className={`text-sm font-semibold ${totalV - totalC >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{hideAmounts ? '•••••' : `${totalV - totalC >= 0 ? '+' : ''}${formatComma(totalV - totalC)}원 (${totalC > 0 ? formatPercent((totalV - totalC) / totalC * 100) : '0%'})`}</div>
-      </div>
-
-      <button onClick={() => setShowSearch(true)} className="w-full glass rounded-3xl border border-dashed border-c-border p-5 flex items-center justify-center gap-2 text-[#3182F6] font-semibold text-base hover:bg-c-bg transition-colors">
-        <Search size={20} /> 종목 검색 / 추가
-      </button>
-
-      {items.length > 0 && (
-        <div className="glass rounded-3xl p-5">
-          <h3 className="font-bold text-sm text-c-text mb-3">포트폴리오 비중</h3>
-          <div className="flex items-center gap-4">
-            <div className="w-32 h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart><Pie data={items.filter(i => i.valueKRW > 0).map(i => ({ name: i.symbol, value: i.valueKRW }))} cx="50%" cy="50%" innerRadius={30} outerRadius={55} paddingAngle={2} dataKey="value">{items.filter(i => i.valueKRW > 0).map((_, idx) => <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}</Pie></PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex-1 space-y-1.5">{items.filter(i => i.valueKRW > 0).map((s, idx) => <div key={s.symbol} className="flex items-center gap-2 text-xs"><span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} /><span className="text-c-text font-medium flex-1">{s.symbol}</span><span className="text-c-text2">{hideAmounts ? '•••••' : `${totalV > 0 ? (s.valueKRW / totalV * 100).toFixed(1) : 0}%`}</span></div>)}</div>
-          </div>
+    <div>
+      <div className="glass flex-1 flex flex-col">
+        {/* 총 평가액 */}
+        <div className="px-5 py-4">
+          <div className="text-sm text-c-text2">총 평가액</div>
+          <div className="text-2xl font-bold text-[#3182F6]">{hideAmounts ? '•••••' : `${formatComma(totalV)}원`}</div>
+          <div className={`text-sm font-semibold ${totalV - totalC >= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>{hideAmounts ? '•••••' : `${totalV - totalC >= 0 ? '+' : ''}${formatComma(totalV - totalC)}원 (${totalC > 0 ? formatPercent((totalV - totalC) / totalC * 100) : '0%'})`}</div>
         </div>
-      )}
 
-      {items.map(stock => (
-        <div key={stock.symbol} className="glass rounded-3xl p-5">
+        <div className="border-t border-c-border mx-5" />
+
+        {/* 종목 검색 */}
+        <div className="px-5 py-3">
+          <button onClick={() => setShowSearch(true)} className="w-full border border-dashed border-c-border rounded-2xl p-3.5 flex items-center justify-center gap-2 text-[#3182F6] font-semibold text-sm hover:bg-c-subtle transition-colors">
+            <Search size={16} /> 종목 검색 / 추가
+          </button>
+        </div>
+
+        {/* 포트폴리오 비중 */}
+        {items.length > 0 && (
+          <>
+            <div className="border-t border-c-border mx-5" />
+            <div className="px-5 py-4">
+              <h3 className="font-bold text-sm text-c-text mb-3">포트폴리오 비중</h3>
+              <div className="flex items-center gap-4">
+                <div className="w-28 h-28">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart><Pie data={items.filter(i => i.valueKRW > 0).map(i => ({ name: i.symbol, value: i.valueKRW }))} cx="50%" cy="50%" innerRadius={28} outerRadius={50} paddingAngle={2} dataKey="value">{items.filter(i => i.valueKRW > 0).map((_, idx) => <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}</Pie></PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 space-y-1.5">{items.filter(i => i.valueKRW > 0).map((s, idx) => <div key={s.symbol} className="flex items-center gap-2 text-xs"><span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} /><span className="text-c-text font-medium flex-1">{s.symbol}</span><span className="text-c-text2">{hideAmounts ? '•••••' : `${totalV > 0 ? (s.valueKRW / totalV * 100).toFixed(1) : 0}%`}</span></div>)}</div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 각 종목 - 독립 차트 */}
+        {items.map(stock => (
+          <div key={stock.symbol}>
+            <div className="border-t border-c-border mx-5" />
+            <div className="px-5 py-4">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2.5"><div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: getLogoColor(stock.symbol) }}>{stock.symbol.substring(0, 2)}</div><div><div className="font-bold text-lg text-c-text">{stock.symbol}</div><div className="text-xs text-c-text2">{stock.name}</div></div></div>
             <div className="text-right"><div className="font-bold text-c-text">{H(formatUSD(stock.currentPrice))}</div><div className={`text-xs font-medium ${stock.pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{H(formatPercent(stock.pnlPercent))}</div></div>
@@ -233,16 +308,7 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             <div className="glass-inner rounded-2xl p-4"><div className="text-xs text-c-text2 mb-1">평가액</div><div className="font-bold text-base text-c-text">{H(formatKRW(stock.valueKRW))}</div></div>
             <div className="glass-inner rounded-2xl p-4"><div className={`text-xs mb-1 ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>손익</div><div className={`font-bold text-base ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>{H(`${stock.pnlKRW >= 0 ? '+' : ''}${formatKRW(stock.pnlKRW)}`)}</div></div>
           </div>
-          <div className="flex gap-1 mb-3">
-            {TIMEFRAMES.map(tf => (
-              <button key={tf.id} onClick={() => { setChartSymbol(stock.symbol); setChartRange(tf.id); }} className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${chartSymbol === stock.symbol && chartRange === tf.id ? 'bg-[#3182F6] text-white' : 'glass-inner text-c-text2'}`}>
-                {tf.label}
-              </button>
-            ))}
-          </div>
-          {chartSymbol === stock.symbol && chartLoading && <div className="h-48 flex items-center justify-center text-c-text2 text-sm"><RefreshCw size={16} className="animate-spin mr-2" /> 차트 로딩중...</div>}
-          {chartSymbol === stock.symbol && !chartLoading && chartData.length > 0 && <CandlestickChart data={chartData} />}
-          {chartSymbol === stock.symbol && !chartLoading && chartData.length === 0 && <div className="h-48 flex items-center justify-center text-c-text2 text-sm">차트 데이터를 불러올 수 없습니다</div>}
+          <IndependentStockChart symbol={stock.symbol} />
           <div className="flex gap-2 mt-3">
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#1A2E24] border border-[#243D2F] text-[#6EBF8B] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Plus size={16} /> 매수</button>
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#2A1A1C] border border-[#3D2428] text-[#D4808A] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Minus size={16} /> 매도</button>
@@ -260,10 +326,26 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             </div>
           )}
         </div>
+      </div>
       ))}
 
       {monthlyDivs.length > 0 && (
-        <div className="glass rounded-3xl p-5"><h3 className="font-bold text-base mb-4 text-c-text">배당 수익 (월별)</h3><div className="h-48"><ResponsiveContainer width="100%" height="100%"><AreaChart data={monthlyDivs}><XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v=>formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Area type="monotone" dataKey="amount" stroke="#00C48C" fill="rgba(0,196,140,0.15)" strokeWidth={2.5} activeDot={{ r: 5, stroke: '#161B22', strokeWidth: 2 }} /></AreaChart></ResponsiveContainer></div></div>
+        <>
+          <div className="border-t border-c-border mx-5" />
+          <div className="px-5 py-4">
+            <h3 className="font-bold text-base mb-4 text-c-text">배당 수익 (월별)</h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyDivs}>
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8B949E' }} axisLine={false} tickLine={false} />
+                  <YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v=>formatKRW(v)} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} />
+                  <Area type="monotone" dataKey="amount" stroke="#00C48C" fill="rgba(0,196,140,0.15)" strokeWidth={2.5} activeDot={{ r: 5, stroke: '#161B22', strokeWidth: 2 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
       )}
 
       {showSearch && (
@@ -306,6 +388,8 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
           </div>
         </div>
       )}
+
+      </div>
 
       {showTradeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShowTradeModal(null)}>
