@@ -325,18 +325,18 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
           </div>
           <IndependentStockChart symbol={stock.symbol} />
           <div className="flex gap-2 mt-3">
-            <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#1A2E24] border border-[#243D2F] text-[#6EBF8B] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Plus size={16} /> 매수</button>
-            <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#2A1A1C] border border-[#3D2428] text-[#D4808A] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Minus size={16} /> 매도</button>
-          </div>
-          <div className="flex gap-2 mt-2">
-            <button onClick={() => setShowTools(showTools === stock.symbol ? null : stock.symbol)} className="flex-1 glass-inner text-c-text2 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5">
-              <Wrench size={14} /> 종목 도구 {showTools === stock.symbol ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#1A2E24] border border-[#243D2F] text-[#6EBF8B] py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Plus size={15} /> 매수</button>
+            <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#2A1A1C] border border-[#3D2428] text-[#D4808A] py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Minus size={15} /> 매도</button>
+            <button onClick={() => setShowTools(showTools === stock.symbol ? null : stock.symbol)} className="flex-1 text-c-text2 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 border border-c-border">
+              <Wrench size={13} /> 도구 {showTools === stock.symbol ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
-            <button onClick={() => { if (confirm(`${stock.symbol}을(를) 포트폴리오에서 삭제할까요?`)) setPortfolio(prev => prev.filter(s => s.symbol !== stock.symbol)); }} className="glass-inner text-red-400 py-3 px-4 rounded-xl text-sm"><Trash2 size={14} /></button>
+            <button onClick={() => { if (confirm(`${stock.symbol}을(를) 포트폴리오에서 삭제할까요?`)) setPortfolio(prev => prev.filter(s => s.symbol !== stock.symbol)); }} className="text-red-400 py-3 px-3 rounded-xl text-sm border border-c-border"><Trash2 size={14} /></button>
           </div>
           {showTools === stock.symbol && (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-4">
+              <div className="border-t border-c-border" />
               <StockAveragingCalc stock={stock} />
+              <div className="border-t border-c-border" />
               <StockProfitCalc stock={stock} rate={rate} />
             </div>
           )}
@@ -574,7 +574,7 @@ function StockAveragingCalc({ stock }) {
   const pnlBefore = stock.avgPrice > 0 ? ((ap - stock.avgPrice) / stock.avgPrice * 100) : 0;
   const pnlAfter = newAvg > 0 ? ((ap - newAvg) / newAvg * 100) : 0;
   return (
-    <div className="glass-inner rounded-2xl p-4 space-y-2.5">
+    <div className="space-y-2.5">
       <div className="text-sm font-bold text-c-text flex items-center gap-1.5"><Calculator size={14} className="text-[#3182F6]" /> 물타기 계산기</div>
       <div className="grid grid-cols-2 gap-2 text-xs text-c-text2">
         <div>현재 {formatNumber(stock.shares)}주</div><div>평단 ${stock.avgPrice.toFixed(2)}</div>
@@ -584,7 +584,7 @@ function StockAveragingCalc({ stock }) {
         <div><label className="text-xs text-c-text2">매수 가격</label><input type="number" step="0.01" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="$" /></div>
       </div>
       {as2 > 0 && ap > 0 && (
-        <div className="glass rounded-3xl p-3 space-y-1.5 text-sm">
+        <div className="border-t border-c-border pt-2.5 space-y-1.5 text-sm">
           <div className="flex justify-between"><span className="text-c-text2">새 평단</span><span className="font-bold text-[#3182F6]">${newAvg.toFixed(4)}</span></div>
           <div className="flex justify-between"><span className="text-c-text2">총 수량</span><span className="font-semibold text-c-text">{formatNumber(ts)}주</span></div>
           <div className="flex justify-between"><span className="text-c-text2">물타기 전 수익률</span><span className={`font-semibold ${pnlBefore >= 0 ? 'text-green-500' : 'text-red-500'}`}>{pnlBefore >= 0 ? '+' : ''}{pnlBefore.toFixed(2)}%</span></div>
@@ -606,7 +606,7 @@ function StockProfitCalc({ stock, rate }) {
   const profitPct = stock.avgPrice > 0 ? ((sp - stock.avgPrice) / stock.avgPrice * 100) : 0;
   const totalSell = sp * ss;
   return (
-    <div className="glass-inner rounded-2xl p-4 space-y-2.5">
+    <div className="space-y-2.5">
       <div className="text-sm font-bold text-c-text flex items-center gap-1.5"><DollarSign size={14} className="text-green-500" /> 수익 계산기</div>
       <div className="grid grid-cols-2 gap-2 text-xs text-c-text2">
         <div>보유 {formatNumber(stock.shares)}주</div><div>평단 ${stock.avgPrice.toFixed(2)}</div>
@@ -616,20 +616,20 @@ function StockProfitCalc({ stock, rate }) {
         <div><label className="text-xs text-c-text2">매도 수량</label><input type="number" value={sellShares} onChange={e => setSellShares(e.target.value)} placeholder={`전량 ${stock.shares}`} /></div>
       </div>
       {sp > 0 && (
-        <div className="glass rounded-3xl p-3 space-y-1.5 text-sm">
+        <div className="border-t border-c-border pt-2.5 space-y-1.5 text-sm">
           <div className="flex justify-between"><span className="text-c-text2">매도 총액</span><span className="font-semibold text-c-text">${totalSell.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="text-c-text2">손익 (USD)</span><span className={`font-bold ${profitUSD >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitUSD >= 0 ? '+' : ''}${profitUSD.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="text-c-text2">손익 (KRW)</span><span className={`font-bold ${profitKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitKRW >= 0 ? '+' : ''}{formatFullKRW(profitKRW)}</span></div>
           <div className="flex justify-between"><span className="text-c-text2">수익률</span><span className={`font-bold text-lg ${profitPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%</span></div>
         </div>
       )}
-      <div className="border-t border-c-border pt-2.5 mt-2.5">
-        <div className="text-xs font-bold text-c-text flex items-center gap-1.5 mb-2"><Target size={12} className="text-[#FF9F43]" /> 목표가 알림</div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="glass rounded-3xl p-2.5 text-center"><div className="text-c-text2 mb-1">+10%</div><div className="font-bold text-green-500">${(stock.avgPrice * 1.1).toFixed(2)}</div></div>
-          <div className="glass rounded-3xl p-2.5 text-center"><div className="text-c-text2 mb-1">+20%</div><div className="font-bold text-green-500">${(stock.avgPrice * 1.2).toFixed(2)}</div></div>
-          <div className="glass rounded-3xl p-2.5 text-center"><div className="text-c-text2 mb-1">-10%</div><div className="font-bold text-red-500">${(stock.avgPrice * 0.9).toFixed(2)}</div></div>
-          <div className="glass rounded-3xl p-2.5 text-center"><div className="text-c-text2 mb-1">본전</div><div className="font-bold text-[#3182F6]">${stock.avgPrice.toFixed(2)}</div></div>
+      <div className="border-t border-c-border pt-2.5 mt-1">
+        <div className="text-xs font-bold text-c-text flex items-center gap-1.5 mb-2"><Target size={12} className="text-[#FF9F43]" /> 목표가</div>
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <div className="text-center"><div className="text-c-text3 mb-0.5">+10%</div><div className="font-bold text-green-500">${(stock.avgPrice * 1.1).toFixed(2)}</div></div>
+          <div className="text-center"><div className="text-c-text3 mb-0.5">+20%</div><div className="font-bold text-green-500">${(stock.avgPrice * 1.2).toFixed(2)}</div></div>
+          <div className="text-center"><div className="text-c-text3 mb-0.5">-10%</div><div className="font-bold text-red-500">${(stock.avgPrice * 0.9).toFixed(2)}</div></div>
+          <div className="text-center"><div className="text-c-text3 mb-0.5">본전</div><div className="font-bold text-[#3182F6]">${stock.avgPrice.toFixed(2)}</div></div>
         </div>
       </div>
     </div>
