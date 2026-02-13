@@ -56,6 +56,20 @@ export async function fetchUpbitPrice(market = 'KRW-BTC') {
   } catch (error) { console.error(`Error fetching upbit ${market}:`, error); return null; }
 }
 
+export async function searchStock(query) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0`;
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const data = await response.json();
+    return (data.quotes || []).filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF').map(q => ({
+      symbol: q.symbol,
+      name: q.shortname || q.longname || q.symbol,
+      exchange: q.exchDisp || q.exchange,
+      type: q.quoteType,
+    }));
+  } catch (error) { console.error('Error searching stock:', error); return []; }
+}
+
 export async function fetchAllMarketData() {
   const [sp500, nasdaq, kospi, exchange, btc] = await Promise.allSettled([
     fetchMarketIndex('^GSPC'), fetchMarketIndex('^IXIC'), fetchMarketIndex('^KS11'),

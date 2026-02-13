@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { formatFullKRW, formatKRW, formatUSD, formatPercent, formatNumber } from '../../utils/formatters';
-import { fetchChartData, fetchCryptoPrice, fetchUpbitPrice } from '../../utils/api';
+import { fetchChartData, fetchCryptoPrice, fetchUpbitPrice, searchStock } from '../../utils/api';
 import { ECONOMIC_CALENDAR } from '../../data/initialData';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, Bitcoin, Calculator, Calendar, Plus, Minus, RefreshCw } from 'lucide-react';
+import { TrendingUp, DollarSign, Bitcoin, Calculator, Calendar, Plus, Minus, RefreshCw, Search, X } from 'lucide-react';
 import CustomTooltip from '../CustomTooltip';
 import EditableNumber from '../EditableNumber';
 import { useSwipe } from '../../hooks/useSwipe';
@@ -35,12 +35,37 @@ function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividen
 }
 
 function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends }) {
-  const [chartSymbol, setChartSymbol] = useState('SLNH');
+  const [chartSymbol, setChartSymbol] = useState(null);
   const [chartRange, setChartRange] = useState('1mo');
   const [chartData, setChartData] = useState([]);
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimeout = useRef(null);
   const rate = exchangeRate || 1450;
+
+  const handleSearch = useCallback((q) => {
+    setSearchQuery(q);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (q.length < 1) { setSearchResults([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      setSearching(true);
+      const results = await searchStock(q);
+      setSearchResults(results);
+      setSearching(false);
+    }, 400);
+  }, []);
+
+  const addStock = (stock) => {
+    if (portfolio.some(s => s.symbol === stock.symbol)) return;
+    setPortfolio(prev => [...prev, { symbol: stock.symbol, name: stock.name, shares: 0, avgPrice: 0, currency: 'USD', transactions: [] }]);
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   useEffect(() => { fetchChartData(chartSymbol, chartRange).then(d => { if (d.length > 0) setChartData(d); }); }, [chartSymbol, chartRange]);
 
@@ -78,6 +103,10 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
         <div className={`text-sm font-semibold ${totalV - totalC >= 0 ? 'text-green-600' : 'text-red-600'}`}>{totalV - totalC >= 0 ? '+' : ''}{formatFullKRW(totalV - totalC)} ({totalC > 0 ? formatPercent((totalV - totalC) / totalC * 100) : '0%'})</div>
       </div>
 
+      <button onClick={() => setShowSearch(true)} className="w-full bg-c-card border-2 border-dashed border-c-border rounded-lg p-5 flex items-center justify-center gap-2 text-[#3182F6] font-semibold text-base hover:bg-c-bg transition-colors">
+        <Search size={20} /> 종목 검색 / 추가
+      </button>
+
       {items.map(stock => (
         <div key={stock.symbol} className="bg-c-card rounded-lg p-5 border border-c-border">
           <div className="flex justify-between items-start mb-3">
@@ -111,6 +140,47 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
 
       {monthlyDivs.length > 0 && (
         <div className="bg-c-card rounded-lg p-5 border border-c-border"><h3 className="font-bold text-base mb-4 text-c-text">배당 수익 (월별)</h3><div className="h-48"><ResponsiveContainer width="100%" height="100%"><AreaChart data={monthlyDivs}><XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v=>formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Area type="monotone" dataKey="amount" stroke="#00C48C" fill="rgba(0,196,140,0.15)" strokeWidth={2.5} activeDot={{ r: 5, stroke: '#161B22', strokeWidth: 2 }} /></AreaChart></ResponsiveContainer></div></div>
+      )}
+
+      {showSearch && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
+          <div className="bg-c-card rounded-t-xl p-6 w-full max-w-[640px] animate-slide max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-c-text">종목 검색</h3>
+              <button onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }} className="text-c-text2"><X size={20} /></button>
+            </div>
+            <div className="relative mb-4">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text3" />
+              <input type="text" value={searchQuery} onChange={e => handleSearch(e.target.value)} placeholder="티커 또는 종목명 (예: AAPL, Tesla)" className="pl-10" autoFocus />
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-1.5">
+              {searching && <div className="text-center py-8 text-c-text2 text-sm">검색중...</div>}
+              {!searching && searchQuery && searchResults.length === 0 && <div className="text-center py-8 text-c-text2 text-sm">검색 결과 없음</div>}
+              {!searching && searchResults.map(r => {
+                const alreadyAdded = portfolio.some(s => s.symbol === r.symbol);
+                return (
+                  <button key={r.symbol} onClick={() => !alreadyAdded && addStock(r)} disabled={alreadyAdded} className={`w-full flex items-center gap-3 p-4 rounded-lg text-left transition-colors ${alreadyAdded ? 'opacity-40' : 'hover:bg-c-bg active:bg-c-bg'}`}>
+                    <div className="w-10 h-10 rounded-lg bg-[#3182F6]/10 flex items-center justify-center text-[#3182F6] font-bold text-xs">{r.type === 'ETF' ? 'ETF' : r.symbol.substring(0, 2)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm text-c-text">{r.symbol}</div>
+                      <div className="text-xs text-c-text2 truncate">{r.name}</div>
+                    </div>
+                    <div className="text-xs text-c-text3">{r.exchange}</div>
+                    {alreadyAdded && <span className="text-xs text-c-text3 font-medium">추가됨</span>}
+                  </button>
+                );
+              })}
+              {!searching && !searchQuery && (
+                <div className="text-center py-8">
+                  <Search size={32} className="text-c-text3 mx-auto mb-3" />
+                  <div className="text-sm text-c-text2">티커 심볼이나 회사명을 검색하세요</div>
+                  <div className="text-xs text-c-text3 mt-1">미국주식, ETF 등 검색 가능</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {showTradeModal && (
