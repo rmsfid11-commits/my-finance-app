@@ -17,15 +17,18 @@ export async function fetchStockPrice(symbol) {
   } catch (error) { console.error(`Error fetching ${symbol}:`, error); return null; }
 }
 
-export async function fetchChartData(symbol, range = '1mo', interval = '1d') {
+export async function fetchChartData(symbol, range = '6mo', interval = '1d') {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
     const response = await fetch(CORS_PROXY + encodeURIComponent(url));
     const data = await response.json();
     const result = data.chart.result[0];
     const timestamps = result.timestamp || [];
-    const closes = result.indicators.quote[0].close || [];
-    return timestamps.map((t, i) => ({ date: new Date(t * 1000).toLocaleDateString('ko-KR'), timestamp: t, price: closes[i] })).filter(d => d.price !== null);
+    const q = result.indicators.quote[0];
+    return timestamps.map((t, i) => ({
+      date: new Date(t * 1000).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+      timestamp: t, open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], price: q.close[i],
+    })).filter(d => d.close !== null && d.open !== null);
   } catch (error) { console.error(`Error fetching chart for ${symbol}:`, error); return []; }
 }
 

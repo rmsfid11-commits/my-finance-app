@@ -3,7 +3,7 @@ import { formatFullKRW, formatKRW, formatUSD, formatPercent, formatNumber } from
 import { fetchChartData, fetchCryptoPrice, fetchUpbitPrice, searchStock } from '../../utils/api';
 import { ECONOMIC_CALENDAR } from '../../data/initialData';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, Bitcoin, Calculator, Calendar, Plus, Minus, RefreshCw, Search, X } from 'lucide-react';
+import { TrendingUp, DollarSign, Bitcoin, Calculator, Calendar, Plus, Minus, RefreshCw, Search, X, ChevronDown, ChevronUp, Wrench, Trash2 } from 'lucide-react';
 import CustomTooltip from '../CustomTooltip';
 import EditableNumber from '../EditableNumber';
 import { useSwipe } from '../../hooks/useSwipe';
@@ -15,6 +15,80 @@ const SUB_TABS = [
   { id: 'calc', label: '계산기' },
   { id: 'calendar', label: '경제일정' },
 ];
+
+const TIMEFRAMES = [
+  { id: '4h', label: '4시간', interval: '1h', range: '10d' },
+  { id: '1d', label: '일봉', interval: '1d', range: '6mo' },
+  { id: '1w', label: '주봉', interval: '1wk', range: '2y' },
+  { id: '1m', label: '월봉', interval: '1mo', range: '5y' },
+];
+
+function CandlestickChart({ data }) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(0);
+  const [tip, setTip] = useState(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+
+  if (!data?.length) return <div className="h-48 flex items-center justify-center text-c-text2 text-sm">차트 데이터 없음</div>;
+
+  const h = 200, padT = 20, padB = 24;
+  const cH = h - padT - padB;
+  const allP = data.flatMap(d => [d.high, d.low]).filter(Boolean);
+  const minP = Math.min(...allP), maxP = Math.max(...allP), rng = maxP - minP || 1;
+  const yPos = (p) => padT + cH * (1 - (p - minP) / rng);
+  const step = width / data.length;
+  const bw = Math.max(1.5, Math.min(8, step * 0.65));
+
+  const handleInteraction = (clientX) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const idx = Math.min(data.length - 1, Math.max(0, Math.floor((clientX - rect.left) / step)));
+    setTip(data[idx]);
+  };
+
+  return (
+    <div ref={ref} className="relative h-[200px] touch-none"
+      onTouchMove={e => handleInteraction(e.touches[0].clientX)}
+      onTouchEnd={() => setTip(null)}
+      onMouseMove={e => handleInteraction(e.clientX)}
+      onMouseLeave={() => setTip(null)}>
+      {tip && (
+        <div className="absolute top-0 left-0 right-0 bg-c-bg/95 border border-c-border rounded-lg px-3 py-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono z-10">
+          <span className="text-c-text2">{tip.date}</span>
+          <span>O <span className="text-c-text font-semibold">{tip.open?.toFixed(2)}</span></span>
+          <span>H <span className="text-green-500 font-semibold">{tip.high?.toFixed(2)}</span></span>
+          <span>L <span className="text-red-500 font-semibold">{tip.low?.toFixed(2)}</span></span>
+          <span>C <span className={`font-semibold ${tip.close >= tip.open ? 'text-green-500' : 'text-red-500'}`}>{tip.close?.toFixed(2)}</span></span>
+        </div>
+      )}
+      {width > 0 && (
+        <svg width={width} height={h}>
+          {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+            const yy = padT + cH * pct, price = maxP - rng * pct;
+            return (<g key={pct}><line x1={0} y1={yy} x2={width} y2={yy} stroke="var(--color-border,#30363D)" strokeWidth={0.5} opacity={0.4} /><text x={width - 4} y={yy - 4} textAnchor="end" fill="#8B949E" fontSize={9}>{price.toFixed(2)}</text></g>);
+          })}
+          {data.map((d, i) => {
+            if (!d.open || !d.close || !d.high || !d.low) return null;
+            const cx = step * i + step / 2, isUp = d.close >= d.open;
+            const color = isUp ? '#00C48C' : '#FF4757';
+            const bTop = yPos(Math.max(d.open, d.close)), bBot = yPos(Math.min(d.open, d.close));
+            return (<g key={i}><line x1={cx} y1={yPos(d.high)} x2={cx} y2={yPos(d.low)} stroke={color} strokeWidth={1} /><rect x={cx - bw / 2} y={bTop} width={bw} height={Math.max(1, bBot - bTop)} fill={color} rx={0.5} /></g>);
+          })}
+          {data.filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0).map((d) => {
+            const idx = data.indexOf(d);
+            return <text key={idx} x={step * idx + step / 2} y={h - 5} textAnchor="middle" fill="#8B949E" fontSize={9}>{d.date}</text>;
+          })}
+        </svg>
+      )}
+    </div>
+  );
+}
 
 function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, goals }) {
   const [subTab, setSubTab] = useState('portfolio');
@@ -36,10 +110,11 @@ function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividen
 
 function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends }) {
   const [chartSymbol, setChartSymbol] = useState(null);
-  const [chartRange, setChartRange] = useState('1mo');
+  const [chartRange, setChartRange] = useState('1d');
   const [chartData, setChartData] = useState([]);
   const [showTradeModal, setShowTradeModal] = useState(null);
   const [tradeForm, setTradeForm] = useState({ shares: '', price: '' });
+  const [showTools, setShowTools] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -67,7 +142,11 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
     setSearchResults([]);
   };
 
-  useEffect(() => { fetchChartData(chartSymbol, chartRange).then(d => { if (d.length > 0) setChartData(d); }); }, [chartSymbol, chartRange]);
+  useEffect(() => {
+    if (!chartSymbol) return;
+    const tf = TIMEFRAMES.find(t => t.id === chartRange) || TIMEFRAMES[1];
+    fetchChartData(chartSymbol, tf.range, tf.interval).then(d => { if (d.length > 0) setChartData(d); });
+  }, [chartSymbol, chartRange]);
 
   const items = useMemo(() => portfolio.map(s => {
     const price = stockPrices[s.symbol]?.price || s.avgPrice;
@@ -122,19 +201,29 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
             <div className="bg-c-bg border border-c-border rounded-xl p-4"><div className={`text-xs mb-1 ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>손익</div><div className={`font-bold text-base ${stock.pnlKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>{stock.pnlKRW >= 0 ? '+' : ''}{formatKRW(stock.pnlKRW)}</div></div>
           </div>
           <div className="flex gap-1 mb-3">
-            {['1d','5d','1mo','3mo','1y'].map(r => (
-              <button key={r} onClick={() => { setChartSymbol(stock.symbol); setChartRange(r); }} className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${chartSymbol === stock.symbol && chartRange === r ? 'bg-[#3182F6] text-white' : 'bg-c-bg text-c-text2 border border-c-border'}`}>
-                {r === '1d' ? '1일' : r === '5d' ? '1주' : r === '1mo' ? '1개월' : r === '3mo' ? '3개월' : '1년'}
+            {TIMEFRAMES.map(tf => (
+              <button key={tf.id} onClick={() => { setChartSymbol(stock.symbol); setChartRange(tf.id); }} className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${chartSymbol === stock.symbol && chartRange === tf.id ? 'bg-[#3182F6] text-white' : 'bg-c-bg text-c-text2 border border-c-border'}`}>
+                {tf.label}
               </button>
             ))}
           </div>
-          {chartSymbol === stock.symbol && chartData.length > 0 && (
-            <div className="h-48"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><defs><linearGradient id={`g-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3182F6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3182F6" stopOpacity={0}/></linearGradient></defs><XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B949E' }} interval="preserveStartEnd" axisLine={false} tickLine={false} /><YAxis hide domain={['auto','auto']} /><Tooltip content={<CustomTooltip formatter={v => formatUSD(v)} />} /><Area type="monotone" dataKey="price" stroke="#3182F6" fill={`url(#g-${stock.symbol})`} strokeWidth={2.5} activeDot={{ r: 5, stroke: '#161B22', strokeWidth: 2 }} /></AreaChart></ResponsiveContainer></div>
-          )}
+          {chartSymbol === stock.symbol && chartData.length > 0 && <CandlestickChart data={chartData} />}
           <div className="flex gap-2 mt-3">
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#1A2E24] border border-[#243D2F] text-[#6EBF8B] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Plus size={16} /> 매수</button>
             <button onClick={() => setShowTradeModal(stock.symbol)} className="flex-1 bg-[#2A1A1C] border border-[#3D2428] text-[#D4808A] py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"><Minus size={16} /> 매도</button>
           </div>
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => setShowTools(showTools === stock.symbol ? null : stock.symbol)} className="flex-1 bg-c-bg border border-c-border text-c-text2 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5">
+              <Wrench size={14} /> 종목 도구 {showTools === stock.symbol ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            <button onClick={() => { if (confirm(`${stock.symbol}을(를) 포트폴리오에서 삭제할까요?`)) setPortfolio(prev => prev.filter(s => s.symbol !== stock.symbol)); }} className="bg-c-bg border border-c-border text-red-400 py-3 px-4 rounded-xl text-sm"><Trash2 size={14} /></button>
+          </div>
+          {showTools === stock.symbol && (
+            <div className="mt-3 space-y-3">
+              <StockAveragingCalc stock={stock} />
+              <StockProfitCalc stock={stock} rate={rate} />
+            </div>
+          )}
         </div>
       ))}
 
@@ -316,6 +405,68 @@ function TargetCalc() {
     return { months, years: (months/12).toFixed(1), date: d.toLocaleDateString('ko-KR') };
   }, [t,c,m,r]);
   return (<div className="bg-c-card rounded-lg p-5 border border-c-border space-y-3"><h3 className="font-bold text-base text-c-text">목표 자산 계산기</h3><div><label className="text-sm text-c-text2 font-medium">목표 금액</label><input type="number" value={t} onChange={e=>setT(e.target.value)} /></div><div><label className="text-sm text-c-text2 font-medium">현재 자산</label><input type="number" value={c} onChange={e=>setC(e.target.value)} /></div><div><label className="text-sm text-c-text2 font-medium">월 저축액</label><input type="number" value={m} onChange={e=>setM(e.target.value)} /></div><div><label className="text-sm text-c-text2 font-medium">연 수익률 (%)</label><input type="number" value={r} onChange={e=>setR(e.target.value)} /></div>{result&&<div className="bg-c-bg border border-c-border rounded-lg p-4 space-y-1.5"><div className="flex justify-between text-sm"><span className="text-c-text2">달성 기간</span><span className="font-bold text-purple-400">{result.years}년 ({result.months}개월)</span></div><div className="flex justify-between text-sm"><span className="text-c-text2">예상 달성일</span><span className="font-semibold text-c-text">{result.date}</span></div></div>}</div>);
+}
+
+function StockAveragingCalc({ stock }) {
+  const [addShares, setAddShares] = useState('');
+  const [addPrice, setAddPrice] = useState('');
+  const as2 = parseInt(addShares) || 0, ap = parseFloat(addPrice) || 0;
+  const ts = stock.shares + as2;
+  const newAvg = ts > 0 ? (stock.shares * stock.avgPrice + as2 * ap) / ts : 0;
+  const pnlBefore = stock.avgPrice > 0 ? ((ap - stock.avgPrice) / stock.avgPrice * 100) : 0;
+  const pnlAfter = newAvg > 0 ? ((ap - newAvg) / newAvg * 100) : 0;
+  return (
+    <div className="bg-c-bg border border-c-border rounded-xl p-4 space-y-2.5">
+      <div className="text-sm font-bold text-c-text flex items-center gap-1.5"><Calculator size={14} className="text-[#3182F6]" /> 물타기 계산기</div>
+      <div className="grid grid-cols-2 gap-2 text-xs text-c-text2">
+        <div>현재 {formatNumber(stock.shares)}주</div><div>평단 ${stock.avgPrice.toFixed(2)}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><label className="text-xs text-c-text2">추가 수량</label><input type="number" value={addShares} onChange={e => setAddShares(e.target.value)} placeholder="주수" /></div>
+        <div><label className="text-xs text-c-text2">매수 가격</label><input type="number" step="0.01" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="$" /></div>
+      </div>
+      {as2 > 0 && ap > 0 && (
+        <div className="bg-c-card border border-c-border rounded-lg p-3 space-y-1.5 text-sm">
+          <div className="flex justify-between"><span className="text-c-text2">새 평단</span><span className="font-bold text-[#3182F6]">${newAvg.toFixed(4)}</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">총 수량</span><span className="font-semibold text-c-text">{formatNumber(ts)}주</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">물타기 전 수익률</span><span className={`font-semibold ${pnlBefore >= 0 ? 'text-green-500' : 'text-red-500'}`}>{pnlBefore >= 0 ? '+' : ''}{pnlBefore.toFixed(2)}%</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">물타기 후 수익률</span><span className={`font-bold ${pnlAfter >= 0 ? 'text-green-500' : 'text-red-500'}`}>{pnlAfter >= 0 ? '+' : ''}{pnlAfter.toFixed(2)}%</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">추가 투자금</span><span className="text-c-text font-medium">${(as2 * ap).toFixed(2)}</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StockProfitCalc({ stock, rate }) {
+  const [sellPrice, setSellPrice] = useState('');
+  const [sellShares, setSellShares] = useState('');
+  const sp = parseFloat(sellPrice) || 0;
+  const ss = parseInt(sellShares) || stock.shares;
+  const profitUSD = (sp - stock.avgPrice) * ss;
+  const profitKRW = profitUSD * rate;
+  const profitPct = stock.avgPrice > 0 ? ((sp - stock.avgPrice) / stock.avgPrice * 100) : 0;
+  const totalSell = sp * ss;
+  return (
+    <div className="bg-c-bg border border-c-border rounded-xl p-4 space-y-2.5">
+      <div className="text-sm font-bold text-c-text flex items-center gap-1.5"><DollarSign size={14} className="text-green-500" /> 수익 계산기</div>
+      <div className="grid grid-cols-2 gap-2 text-xs text-c-text2">
+        <div>보유 {formatNumber(stock.shares)}주</div><div>평단 ${stock.avgPrice.toFixed(2)}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><label className="text-xs text-c-text2">매도 가격</label><input type="number" step="0.01" value={sellPrice} onChange={e => setSellPrice(e.target.value)} placeholder="$" /></div>
+        <div><label className="text-xs text-c-text2">매도 수량</label><input type="number" value={sellShares} onChange={e => setSellShares(e.target.value)} placeholder={`전량 ${stock.shares}`} /></div>
+      </div>
+      {sp > 0 && (
+        <div className="bg-c-card border border-c-border rounded-lg p-3 space-y-1.5 text-sm">
+          <div className="flex justify-between"><span className="text-c-text2">매도 총액</span><span className="font-semibold text-c-text">${totalSell.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">손익 (USD)</span><span className={`font-bold ${profitUSD >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitUSD >= 0 ? '+' : ''}${profitUSD.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">손익 (KRW)</span><span className={`font-bold ${profitKRW >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitKRW >= 0 ? '+' : ''}{formatFullKRW(profitKRW)}</span></div>
+          <div className="flex justify-between"><span className="text-c-text2">수익률</span><span className={`font-bold text-lg ${profitPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>{profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%</span></div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CalendarSection() {
