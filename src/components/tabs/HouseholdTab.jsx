@@ -80,19 +80,41 @@ function TxRow({ tx, hideAmounts, customCategories, onEdit, onDelete, showDate }
 /* ─── Main ─── */
 function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedExpenses, setFixedExpenses, addTransaction, deleteTransaction, updateTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods }) {
   const [subTab, setSubTab] = useState('quick');
+  const [showMore, setShowMore] = useState(false);
   const catNames = useMemo(() => customCategories.map(c => c.name), [customCategories]);
   const sharedProps = { transactions, hideAmounts, customCategories, catNames, paymentMethods, deleteTransaction, updateTransaction };
+  const mainTabs = SUB_TABS.slice(0, 4);
+  const moreTabs = SUB_TABS.slice(4);
+  const moreSelected = moreTabs.find(t => t.id === subTab);
 
   return (
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
-        <div className="flex flex-wrap gap-1.5 px-4 py-3 border-b border-c-border">
-          {SUB_TABS.map(({id,label}) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${subTab===id?'bg-[#3182F6] text-white shadow-sm shadow-blue-500/20':'glass-inner text-c-text2 active:bg-c-subtle'}`}>
+        {/* 메인 4탭 */}
+        <div className="grid grid-cols-4 border-b border-c-border">
+          {mainTabs.map(({id,label},i) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-sm font-bold text-center transition-all relative ${i<3?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
               {label}
+              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full"/>}
             </button>
           ))}
         </div>
+        {/* 더보기 토글 */}
+        <button onClick={() => setShowMore(!showMore)} className={`flex items-center justify-center gap-2 py-3.5 text-sm font-bold border-b border-c-border transition-all active:bg-c-subtle ${moreSelected && !showMore ? 'text-[#3182F6]' : 'text-c-text3'}`}>
+          {moreSelected && !showMore ? moreSelected.label : showMore ? '접기' : '더보기'}
+          {showMore ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+          {!showMore && !moreSelected && <span className="text-[10px] text-c-text3 font-medium ml-0.5">+{moreTabs.length}</span>}
+        </button>
+        {/* 확장 탭 */}
+        {showMore && (
+          <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-c-border animate-fade">
+            {moreTabs.map(({id,label}) => (
+              <button key={id} onClick={() => { setSubTab(id); setShowMore(false); }} className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${subTab===id?'bg-[#3182F6] text-white shadow-sm shadow-blue-500/20':'glass-inner text-c-text2 active:bg-c-subtle'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {subTab==='quick' && <QuickInput addTransaction={addTransaction} {...sharedProps} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} setCustomCategories={setCustomCategories} />}
         {subTab==='calendar' && <CalendarView {...sharedProps} />}
         {subTab==='daily' && <DailyView budget={budget} {...sharedProps} />}
