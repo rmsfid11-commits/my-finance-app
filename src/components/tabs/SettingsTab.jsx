@@ -168,12 +168,13 @@ function SettingsTab() {
 
       {/* 사용 설명서 */}
       {showGuide && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 animate-fade" onClick={() => setShowGuide(false)}>
-          <div className="glass rounded-t-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 animate-slide" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 animate-fade" onClick={() => setShowGuide(false)}>
+          <div className="glass rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col animate-pop" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 pb-3 shrink-0">
               <h2 className="text-lg font-bold text-c-text">사용 설명서</h2>
               <button onClick={() => setShowGuide(false)} className="text-c-text3"><X size={20} /></button>
             </div>
+            <div className="overflow-y-auto px-6 pb-6 flex-1">
             <div className="space-y-6 text-sm text-c-text2 leading-relaxed">
 
               <div>
@@ -285,18 +286,20 @@ function SettingsTab() {
               </div>
 
             </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* 업데이트 내역 */}
       {showChangelog && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 animate-fade" onClick={() => setShowChangelog(false)}>
-          <div className="glass rounded-t-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 animate-slide" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 animate-fade" onClick={() => setShowChangelog(false)}>
+          <div className="glass rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col animate-pop" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 pb-3 shrink-0">
               <h2 className="text-lg font-bold text-c-text">업데이트 내역</h2>
               <button onClick={() => setShowChangelog(false)} className="text-c-text3"><X size={20} /></button>
             </div>
+            <div className="overflow-y-auto px-6 pb-6 flex-1">
             <div className="space-y-6 text-sm text-c-text2 leading-relaxed">
 
               {/* v1.2 */}
@@ -408,6 +411,7 @@ function SettingsTab() {
                 </ul>
               </div>
 
+            </div>
             </div>
           </div>
         </div>
