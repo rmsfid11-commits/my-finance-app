@@ -92,20 +92,20 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
   };
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-5 py-5 space-y-6">
       <div>
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-base text-c-text">자주 쓰는 항목</h3>
-          <button onClick={() => setEditMode(!editMode)} className={`p-1.5 rounded-lg transition-colors ${editMode ? 'text-[#3182F6] bg-[#3182F6]/10' : 'text-c-text3 hover:text-c-text2'}`}>
-            <Pencil size={16} />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-lg text-c-text">자주 쓰는 항목</h3>
+          <button onClick={() => setEditMode(!editMode)} className={`p-2 rounded-xl transition-colors ${editMode ? 'text-[#3182F6] bg-[#3182F6]/10' : 'text-c-text3 hover:text-c-text2'}`}>
+            <Pencil size={18} />
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {customQuickInputs.map((item, idx) => (
             <div key={`${item.label}-${idx}`} className="relative">
-              <button onClick={() => !editMode && handleQuick(item)} className={`w-full rounded-2xl p-4 text-center transition-all border border-c-border ${editMode ? 'opacity-80' : 'hover:bg-c-subtle active:scale-95'}`}>
-                <div className="text-lg mb-1">{item.icon}</div>
-                <div className="text-sm font-semibold text-c-text mb-0.5">{item.label}</div>
+              <button onClick={() => !editMode && handleQuick(item)} className={`w-full rounded-2xl p-5 text-center transition-all border border-c-border ${editMode ? 'opacity-80' : 'hover:bg-c-subtle active:scale-95'}`}>
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <div className="text-sm font-semibold text-c-text mb-1">{item.label}</div>
                 <div className="text-xs text-c-text2">{hideAmounts ? '•••••' : formatFullKRW(item.amount)}</div>
               </button>
               {editMode && (
@@ -116,9 +116,9 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
             </div>
           ))}
           {editMode && (
-            <button onClick={() => setShowAddItem(!showAddItem)} className="rounded-2xl p-4 text-center border-2 border-dashed border-c-border hover:border-[#3182F6]/50 transition-colors">
-              <Plus size={20} className="mx-auto text-c-text3 mb-1" />
-              <div className="text-xs text-c-text3">추가</div>
+            <button onClick={() => setShowAddItem(!showAddItem)} className="rounded-2xl p-5 text-center border-2 border-dashed border-c-border hover:border-[#3182F6]/50 transition-colors">
+              <Plus size={24} className="mx-auto text-c-text3 mb-2" />
+              <div className="text-sm text-c-text3">추가</div>
             </button>
           )}
         </div>
@@ -138,10 +138,10 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => setShowManual(!showManual)} className="flex items-center gap-3 p-4 rounded-2xl border border-c-border text-sm font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><Plus size={20} className="text-[#3182F6]" /> 직접 입력</button>
-        <button onClick={() => setShowSMS(!showSMS)} className="flex items-center gap-3 p-4 rounded-2xl border border-c-border text-sm font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><MessageSquare size={20} className="text-green-500" /> SMS 입력</button>
-        <button className="flex items-center gap-3 p-4 rounded-2xl border border-c-border text-sm font-semibold text-c-text opacity-50"><Camera size={20} className="text-purple-500" /> 영수증 OCR</button>
-        <button className="flex items-center gap-3 p-4 rounded-2xl border border-c-border text-sm font-semibold text-c-text opacity-50"><Mic size={20} className="text-orange-500" /> 음성 입력</button>
+        <button onClick={() => setShowManual(!showManual)} className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><Plus size={22} className="text-[#3182F6]" /> 직접 입력</button>
+        <button onClick={() => setShowSMS(!showSMS)} className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><MessageSquare size={22} className="text-green-500" /> SMS 입력</button>
+        <button className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text opacity-50"><Camera size={22} className="text-purple-500" /> 영수증 OCR</button>
+        <button className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text opacity-50"><Mic size={22} className="text-orange-500" /> 음성 입력</button>
       </div>
 
       {showManual && (
@@ -281,19 +281,19 @@ function DailyView({ transactions, budget, deleteTransaction, updateTransaction,
   };
 
   return (
-    <div className="px-5 py-4 space-y-4">
-      <div className="flex gap-2 overflow-x-auto pb-2">{dates.map(d => <button key={d} onClick={() => setSelectedDate(d)} className={`px-4 py-2.5 rounded-xl text-sm whitespace-nowrap min-w-[68px] text-center transition-all ${selectedDate === d ? 'bg-[#3182F6] text-white font-semibold shadow-lg shadow-blue-500/25' : 'border border-c-border text-c-text2'}`}><div>{d.substring(5)}</div><div className="text-xs opacity-70">{getDayOfWeek(d)}</div></button>)}</div>
+    <div className="px-5 py-5 space-y-6">
+      <div className="flex gap-2.5 overflow-x-auto pb-2">{dates.map(d => <button key={d} onClick={() => setSelectedDate(d)} className={`px-5 py-3 rounded-xl text-sm whitespace-nowrap min-w-[72px] text-center transition-all ${selectedDate === d ? 'bg-[#3182F6] text-white font-semibold shadow-lg shadow-blue-500/25' : 'border border-c-border text-c-text2'}`}><div>{d.substring(5)}</div><div className="text-xs opacity-70">{getDayOfWeek(d)}</div></button>)}</div>
       <div>
         <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-base text-c-text">오늘 요약</h3><span className="text-xs text-c-text3">{selectedDate}</span></div>
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="text-center border border-c-border rounded-2xl p-3"><div className="text-xs font-medium text-c-text2 mb-1">총 지출</div><div className="text-sm font-bold text-red-500">{hideAmounts ? '•••••' : formatFullKRW(dayTotal)}</div></div>
-          <div className="text-center border border-c-border rounded-2xl p-3"><div className="text-xs font-medium text-c-text2 mb-1">일 예산</div><div className="text-sm font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(dailyBudget)}</div></div>
-          <div className="text-center border border-c-border rounded-2xl p-3"><div className="text-xs font-medium text-c-text2 mb-1">잔여</div><div className={`text-sm font-bold ${dailyBudget - dayTotal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{hideAmounts ? '•••••' : formatFullKRW(dailyBudget - dayTotal)}</div></div>
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="text-center border border-c-border rounded-2xl p-4"><div className="text-xs font-medium text-c-text2 mb-2">총 지출</div><div className="text-base font-bold text-red-500">{hideAmounts ? '•••••' : formatFullKRW(dayTotal)}</div></div>
+          <div className="text-center border border-c-border rounded-2xl p-4"><div className="text-xs font-medium text-c-text2 mb-2">일 예산</div><div className="text-base font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(dailyBudget)}</div></div>
+          <div className="text-center border border-c-border rounded-2xl p-4"><div className="text-xs font-medium text-c-text2 mb-2">잔여</div><div className={`text-base font-bold ${dailyBudget - dayTotal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{hideAmounts ? '•••••' : formatFullKRW(dailyBudget - dayTotal)}</div></div>
         </div>
         {catData.length > 0 && <div className="h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={catData} layout="vertical"><XAxis type="number" hide /><YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#8B949E' }} width={45} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="value" radius={[0, 8, 8, 0]}>{catData.map((e, i) => <Cell key={i} fill={e.fill} />)}</Bar></BarChart></ResponsiveContainer></div>}
       </div>
       <div>
-        <h3 className="font-bold text-base text-c-text mb-3">내역</h3>
+        <h3 className="font-bold text-lg text-c-text mb-4">내역</h3>
         {dayTx.length > 0 ? (
           <div className="space-y-1">
             {dayTx.map(tx => (
@@ -348,12 +348,12 @@ function WeeklyView({ transactions, budget, hideAmounts }) {
   const peerAvg = Math.round(PEER_DATA.reduce((s, p) => s + p.totalExpense, 0) / PEER_DATA.length / 4);
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-5 py-5 space-y-6">
       <div>
-        <h3 className="font-bold text-base text-c-text mb-4">주간 요약</h3>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="border border-c-border rounded-2xl p-4 text-center"><div className="text-sm font-medium text-red-500 mb-1">주간 지출</div><div className="text-xl font-bold text-red-500">{hideAmounts ? '•••••' : formatKRW(weekTotal)}</div></div>
-          <div className="border border-c-border rounded-2xl p-4 text-center"><div className="text-sm font-medium text-c-text2 mb-1">일 평균</div><div className="text-xl font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(Math.round(weekTotal / 7))}</div></div>
+        <h3 className="font-bold text-lg text-c-text mb-4">주간 요약</h3>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="border border-c-border rounded-2xl p-5 text-center"><div className="text-sm font-medium text-red-500 mb-2">주간 지출</div><div className="text-xl font-bold text-red-500">{hideAmounts ? '•••••' : formatKRW(weekTotal)}</div></div>
+          <div className="border border-c-border rounded-2xl p-5 text-center"><div className="text-sm font-medium text-c-text2 mb-2">일 평균</div><div className="text-xl font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(Math.round(weekTotal / 7))}</div></div>
         </div>
         <div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={weekData}><XAxis dataKey="day" tick={{ fontSize: 12, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="amount" fill="#FF4757" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div>
       </div>
@@ -383,18 +383,18 @@ function MonthlyView({ transactions, budget, setBudget, profile, fixedExpenses, 
   const pieData = catBreakdown.map(c => ({ name: c.name, value: c.value }));
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-5 py-5 space-y-6">
       <div>
-        <h3 className="font-bold text-base text-c-text mb-4">월간 요약</h3>
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="border border-c-border rounded-2xl p-3 text-center"><div className="text-xs font-medium text-green-500 mb-1">수입</div><div className="text-sm font-bold text-green-500">{hideAmounts ? '•••••' : formatKRW(profile.salary)}</div></div>
-          <div className="border border-c-border rounded-2xl p-3 text-center"><div className="text-xs font-medium text-red-500 mb-1">지출</div><div className="text-sm font-bold text-red-500">{hideAmounts ? '•••••' : formatKRW(totalExpense)}</div></div>
-          <div className="border border-c-border rounded-2xl p-3 text-center"><div className="text-xs font-medium text-purple-500 mb-1">저축</div><div className="text-sm font-bold text-purple-500">{hideAmounts ? '•••••' : formatKRW(savings)}</div></div>
+        <h3 className="font-bold text-lg text-c-text mb-4">월간 요약</h3>
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="border border-c-border rounded-2xl p-4 text-center"><div className="text-xs font-medium text-green-500 mb-2">수입</div><div className="text-base font-bold text-green-500">{hideAmounts ? '•••••' : formatKRW(profile.salary)}</div></div>
+          <div className="border border-c-border rounded-2xl p-4 text-center"><div className="text-xs font-medium text-red-500 mb-2">지출</div><div className="text-base font-bold text-red-500">{hideAmounts ? '•••••' : formatKRW(totalExpense)}</div></div>
+          <div className="border border-c-border rounded-2xl p-4 text-center"><div className="text-xs font-medium text-purple-500 mb-2">저축</div><div className="text-base font-bold text-purple-500">{hideAmounts ? '•••••' : formatKRW(savings)}</div></div>
         </div>
-        <div className="border border-c-border rounded-2xl p-4"><div className="flex justify-between text-xs mb-2"><span className="font-medium text-c-text">저축률</span><span className="font-bold text-purple-500">{hideAmounts ? '•••••' : `${savingRate}%`}</span></div><div className="progress-bar"><div className="progress-fill bg-purple-500" style={{ width: `${Math.min(Math.max(parseFloat(savingRate), 0), 100)}%` }} /></div></div>
+        <div className="border border-c-border rounded-2xl p-5"><div className="flex justify-between text-sm mb-3"><span className="font-medium text-c-text">저축률</span><span className="font-bold text-purple-500">{hideAmounts ? '•••••' : `${savingRate}%`}</span></div><div className="progress-bar"><div className="progress-fill bg-purple-500" style={{ width: `${Math.min(Math.max(parseFloat(savingRate), 0), 100)}%` }} /></div></div>
       </div>
       <div>
-        <h3 className="font-bold text-base text-c-text mb-4">카테고리별</h3>
+        <h3 className="font-bold text-lg text-c-text mb-4">카테고리별</h3>
         {pieData.length > 0 && <div className="h-52 mb-4"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={75} dataKey="value" paddingAngle={3} cornerRadius={4}>{pieData.map((e, i) => <Cell key={i} fill={getCatColor(customCategories, e.name)} />)}</Pie><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /></PieChart></ResponsiveContainer></div>}
         <div className="space-y-3">{catBreakdown.map(c => <div key={c.name} className="border-b border-c-border pb-3"><div className="flex justify-between items-center mb-2"><span className="text-base font-medium text-c-text">{c.name}</span><span className="text-base font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(c.value)}</span></div>{c.budget > 0 && <><div className="progress-bar"><div className={`progress-fill ${parseInt(c.usage) > 100 ? 'bg-red-500' : parseInt(c.usage) > 80 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${Math.min(parseInt(c.usage) || 0, 100)}%` }} /></div><div className="flex justify-between text-sm text-c-text2 mt-1.5"><span>예산 <EditableNumber value={c.budget} onSave={(v) => setBudget(prev => ({ ...prev, [c.name]: Math.round(v) }))} format={formatFullKRW} /></span><span className={parseInt(c.usage) > 100 ? 'text-red-500 font-bold' : ''}>{hideAmounts ? '•••••' : `${c.usage}%`}</span></div></>}</div>)}</div>
       </div>
@@ -404,7 +404,7 @@ function MonthlyView({ transactions, budget, setBudget, profile, fixedExpenses, 
         <div className="mt-3 bg-white/10 rounded-lg p-3 text-center"><div className="text-sm">당신이 이긴 사람: <span className="font-bold text-yellow-300">{peerStats.betterThan}명</span> | 당신보다 위: <span className="font-bold">{peerStats.worseThan}명</span></div><div className="text-xs opacity-70 mt-1">상위 {((peerStats.worseThan / 600) * 100).toFixed(0)}%</div></div>
       </div>
       <div>
-        <h3 className="font-bold text-base text-c-text mb-3">AI 분석</h3>
+        <h3 className="font-bold text-lg text-c-text mb-4">AI 분석</h3>
         <div className="space-y-2 text-sm">
           <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-green-500 mb-1">강점</div><p className="text-green-400 text-xs">{parseFloat(savingRate) >= 30 ? '저축률이 좋습니다! 꾸준히 유지하세요.' : '가계부 기록을 시작한 것 자체가 훌륭합니다!'}</p></div>
           <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-yellow-500 mb-1">개선점</div><p className="text-yellow-400 text-xs">도시락이나 집밥을 활용하면 식비를 줄일 수 있어요.</p></div>
@@ -430,7 +430,7 @@ function FixedView({ fixedExpenses, setFixedExpenses, hideAmounts, customCategor
   };
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-5 py-5 space-y-6">
       <div>
         <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-base text-c-text">고정지출 관리</h3><div className="text-sm font-bold text-red-500">월 {hideAmounts ? '•••••' : formatFullKRW(totalFixed)}</div></div>
         <div className="space-y-1">{fixedExpenses.map(e => <div key={e.id} className="flex items-center gap-3 py-3 border-b border-c-border last:border-0"><div className="flex-1 min-w-0"><div className="text-base font-medium text-c-text">{e.name}</div><div className="text-sm text-c-text2">매월 {e.day}일 · <span style={{ color: getCatColor(customCategories, e.category) }}>{e.category}</span></div></div><div className="text-right flex items-center gap-3 shrink-0"><span className="text-base font-bold text-red-500">{hideAmounts ? '•••••' : formatFullKRW(e.amount)}</span><button onClick={() => setFixedExpenses(p => p.filter(f => f.id !== e.id))} className="text-c-text3 hover:text-red-400 transition-colors"><Trash2 size={16} /></button></div></div>)}</div>
@@ -453,16 +453,16 @@ function ChallengeView({ transactions, budget, hideAmounts }) {
   ];
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-5 py-5 space-y-6">
       <div>
-        <h3 className="font-bold text-base text-c-text mb-4">이번달 챌린지</h3>
-        <div className="space-y-3">{challenges.filter(c => c.active).map(c => {
+        <h3 className="font-bold text-lg text-c-text mb-4">이번달 챌린지</h3>
+        <div className="space-y-4">{challenges.filter(c => c.active).map(c => {
           const isOk = c.type === 'count' ? c.current >= c.target : c.current <= c.target;
           const pct = c.type === 'count' ? Math.min(c.current / c.target * 100, 100) : Math.max((c.target - c.current) / c.target * 100, 0);
-          return (<div key={c.id} className="border border-c-border rounded-2xl p-5"><div className="flex justify-between mb-2.5"><span className="text-base font-semibold text-c-text">{c.name}</span><span className={`text-sm font-bold ${isOk ? 'text-green-500' : 'text-orange-500'}`}>{c.type === 'count' ? `${c.current}/${c.target}일` : `${hideAmounts ? '•••••' : formatFullKRW(c.current)} / ${hideAmounts ? '•••••' : formatFullKRW(c.target)}`}</span></div><div className="progress-bar"><div className={`progress-fill ${isOk ? 'bg-green-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} /></div></div>);
+          return (<div key={c.id} className="border border-c-border rounded-2xl p-6"><div className="flex justify-between mb-2.5"><span className="text-base font-semibold text-c-text">{c.name}</span><span className={`text-sm font-bold ${isOk ? 'text-green-500' : 'text-orange-500'}`}>{c.type === 'count' ? `${c.current}/${c.target}일` : `${hideAmounts ? '•••••' : formatFullKRW(c.current)} / ${hideAmounts ? '•••••' : formatFullKRW(c.target)}`}</span></div><div className="progress-bar"><div className={`progress-fill ${isOk ? 'bg-green-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} /></div></div>);
         })}</div>
       </div>
-      <div><h3 className="font-bold text-base text-c-text mb-4">추천 챌린지</h3><div className="space-y-2.5">{['커피 비용 3만원 이하', '한달 저축률 40%', '1주일 외식 제로'].map((c, i) => <div key={i} className="flex items-center justify-between border border-c-border rounded-2xl p-5"><span className="text-base font-medium text-c-text">{c}</span><button className="text-sm bg-[#3182F6] text-white px-5 py-2 rounded-xl font-semibold">참여</button></div>)}</div></div>
+      <div><h3 className="font-bold text-lg text-c-text mb-4">추천 챌린지</h3><div className="space-y-3">{['커피 비용 3만원 이하', '한달 저축률 40%', '1주일 외식 제로'].map((c, i) => <div key={i} className="flex items-center justify-between border border-c-border rounded-2xl p-6"><span className="text-base font-medium text-c-text">{c}</span><button className="text-sm bg-[#3182F6] text-white px-5 py-2 rounded-xl font-semibold">참여</button></div>)}</div></div>
       <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-green-500">보상 시스템</h3><p className="text-xs text-green-400">챌린지 3개 달성 시 절약액의 10%를 자유롭게 사용하세요!</p></div>
     </div>
   );
@@ -479,11 +479,11 @@ function PatternView({ transactions, hideAmounts, customCategories }) {
   const topPlaces = useMemo(() => { const p = {}; monthTx.forEach(t => { if (t.place) { if (!p[t.place]) p[t.place] = { count: 0, amount: 0 }; p[t.place].count++; p[t.place].amount += t.amount; } }); return Object.entries(p).sort((a, b) => b[1].count - a[1].count).slice(0, 5).map(([name, data]) => ({ name, ...data })); }, [monthTx]);
 
   return (
-    <div className="px-5 py-4 space-y-4">
-      <div><h3 className="font-bold text-base text-c-text mb-4">시간대별 지출</h3><div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={timeData}><XAxis dataKey="label" tick={{ fontSize: 11, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="amount" fill="#3182F6" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
-      <div><h3 className="font-bold text-base text-c-text mb-4">요일별 패턴</h3><div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={dayData}><XAxis dataKey="day" tick={{ fontSize: 12, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="amount" fill="#7C5CFC" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
-      <div><h3 className="font-bold text-base text-c-text mb-4">결제 수단별</h3><div className="space-y-2.5">{paymentData.sort((a, b) => b.value - a.value).map(p => <div key={p.name} className="flex items-center gap-2"><span className="text-xs w-20 text-c-text2 font-medium">{p.name}</span><div className="flex-1 h-6 border border-c-border rounded-full overflow-hidden"><div className="h-full bg-[#3182F6] rounded-full transition-all duration-500" style={{ width: `${(p.value / Math.max(...paymentData.map(x => x.value))) * 100}%` }} /></div><span className="text-xs font-bold text-c-text w-20 text-right">{hideAmounts ? '•••••' : formatKRW(p.value)}</span></div>)}</div></div>
-      <div><h3 className="font-bold text-base text-c-text mb-4">자주 가는 곳 TOP 5</h3><div className="space-y-2">{topPlaces.map((p, i) => <div key={p.name} className="flex items-center gap-3 py-2"><span className="w-7 h-7 rounded-full bg-[#3182F6] text-white text-xs flex items-center justify-center font-bold">{i + 1}</span><div className="flex-1"><div className="text-sm font-semibold text-c-text">{p.name}</div><div className="text-xs text-c-text2">{p.count}회 방문</div></div><span className="text-sm font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(p.amount)}</span></div>)}{topPlaces.length === 0 && <div className="text-sm text-c-text3 text-center py-6">데이터가 부족합니다</div>}</div></div>
+    <div className="px-5 py-5 space-y-6">
+      <div><h3 className="font-bold text-lg text-c-text mb-4">시간대별 지출</h3><div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={timeData}><XAxis dataKey="label" tick={{ fontSize: 11, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="amount" fill="#3182F6" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+      <div><h3 className="font-bold text-lg text-c-text mb-4">요일별 패턴</h3><div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={dayData}><XAxis dataKey="day" tick={{ fontSize: 12, fill: '#8B949E' }} axisLine={false} tickLine={false} /><YAxis width={50} tick={{ fontSize: 10, fill: '#8B949E' }} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} /><Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} /><Bar dataKey="amount" fill="#7C5CFC" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+      <div><h3 className="font-bold text-lg text-c-text mb-4">결제 수단별</h3><div className="space-y-2.5">{paymentData.sort((a, b) => b.value - a.value).map(p => <div key={p.name} className="flex items-center gap-2"><span className="text-xs w-20 text-c-text2 font-medium">{p.name}</span><div className="flex-1 h-6 border border-c-border rounded-full overflow-hidden"><div className="h-full bg-[#3182F6] rounded-full transition-all duration-500" style={{ width: `${(p.value / Math.max(...paymentData.map(x => x.value))) * 100}%` }} /></div><span className="text-xs font-bold text-c-text w-20 text-right">{hideAmounts ? '•••••' : formatKRW(p.value)}</span></div>)}</div></div>
+      <div><h3 className="font-bold text-lg text-c-text mb-4">자주 가는 곳 TOP 5</h3><div className="space-y-2">{topPlaces.map((p, i) => <div key={p.name} className="flex items-center gap-3 py-2"><span className="w-7 h-7 rounded-full bg-[#3182F6] text-white text-xs flex items-center justify-center font-bold">{i + 1}</span><div className="flex-1"><div className="text-sm font-semibold text-c-text">{p.name}</div><div className="text-xs text-c-text2">{p.count}회 방문</div></div><span className="text-sm font-bold text-c-text">{hideAmounts ? '•••••' : formatFullKRW(p.amount)}</span></div>)}{topPlaces.length === 0 && <div className="text-sm text-c-text3 text-center py-6">데이터가 부족합니다</div>}</div></div>
       <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-blue-500">AI 인사이트</h3><div className="text-xs text-blue-400 space-y-1.5"><p>• 점심시간(12-14시)에 가장 많이 지출하고 있어요.</p><p>• 주말 지출이 평일보다 높은 편이에요.</p><p>• 도시락이나 집밥을 활용하면 식비를 30% 줄일 수 있어요.</p></div></div>
     </div>
   );
