@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatPercent } from '../utils/formatters';
+import { useStore } from '../store/useStore';
+import { SkeletonBanner } from './Skeleton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-function Banner({ marketData, exchangeRate }) {
+function Banner() {
+  const { marketData, exchangeRate } = useStore();
+  const hasData = marketData?.sp500 || marketData?.nasdaq || marketData?.btc || exchangeRate;
   const [currentIndex, setCurrentIndex] = useState(0);
   const items = useMemo(() => [
     { label: 'S&P 500', value: marketData?.sp500?.price?.toLocaleString('en-US', { maximumFractionDigits: 2 }), change: marketData?.sp500?.changePercent, loaded: !!marketData?.sp500 },
@@ -17,6 +21,8 @@ function Banner({ marketData, exchangeRate }) {
   const current = items[currentIndex];
   const isUp = current?.change > 0;
   const isDown = current?.change < 0;
+
+  if (!hasData) return <SkeletonBanner />;
 
   return (
     <div className="glass text-white px-6 py-3">

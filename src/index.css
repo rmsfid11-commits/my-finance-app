@@ -300,6 +300,16 @@ input::placeholder { color: var(--c-text3); }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Skeleton loading */
+.skeleton-pulse {
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
 /* Light theme overrides */
 [data-theme="notion"] .neon-red, [data-theme="rose"] .neon-red {
   color: #D44C2D;

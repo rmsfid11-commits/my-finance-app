@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useStore } from '../store/useStore';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
-function Onboarding({ profile, setProfile, onComplete }) {
+function Onboarding({ onComplete }) {
+  const { profile, setProfile } = useStore();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: profile.name || '', age: profile.age || 30, job: profile.job || '', salary: profile.salary || 3000000, housing: profile.housing || '월세' });
 

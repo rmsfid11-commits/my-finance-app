@@ -1,8 +1,10 @@
 import { useState, useMemo, useRef } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { formatFullKRW, formatKRW, generateId, formatDate, formatTime, getDayOfWeek } from '../../utils/formatters';
+import { useStore } from '../../store/useStore';
+import { haptic } from '../../utils/haptic';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Trash2, MessageSquare, Camera, Mic, Pencil, X, Check, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search, Download, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Camera, Mic, Pencil, X, Check, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search, Download, Image as ImageIcon, ScanLine } from 'lucide-react';
 import CustomTooltip from '../CustomTooltip';
 import EditableNumber from '../EditableNumber';
 
@@ -77,7 +79,8 @@ function TxRow({ tx, hideAmounts, customCategories, onEdit, onDelete, showDate }
 }
 
 /* ─── Main ─── */
-function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedExpenses, setFixedExpenses, addTransaction, deleteTransaction, updateTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods }) {
+function HouseholdTab() {
+  const { profile, goals, budget, setBudget, transactions, fixedExpenses, setFixedExpenses, addTransaction, deleteTransaction, updateTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods } = useStore();
   const [subTab, setSubTab] = useState('quick');
   const [showMore, setShowMore] = useState(false);
   const catNames = useMemo(() => customCategories.map(c => c.name), [customCategories]);

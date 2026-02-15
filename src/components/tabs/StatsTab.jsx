@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { formatKRW, formatFullKRW } from '../../utils/formatters';
 import { CATEGORY_COLORS } from '../../data/initialData';
+import { useStore } from '../../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PieChart, Pie, Cell } from 'recharts';
 import CustomTooltip from '../CustomTooltip';
 import EditableNumber from '../EditableNumber';
@@ -9,7 +10,8 @@ import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Flame, Calendar, Targ
 const LINE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3'];
 const getCatColor = (cats, name) => cats?.find(c => c.name === name)?.color || CATEGORY_COLORS?.[name] || '#8B95A1';
 
-function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, stockPrices, exchangeRate, dividends, fixedExpenses, hideAmounts, customCategories }) {
+function StatsTab() {
+  const { profile, goals, setGoals, budget, transactions, portfolio, stockPrices, exchangeRate, dividends, fixedExpenses, hideAmounts, customCategories } = useStore();
   const [expanded, setExpanded] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedCat, setSelectedCat] = useState(null);

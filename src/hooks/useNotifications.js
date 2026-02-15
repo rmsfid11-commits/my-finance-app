@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { useStore } from '../store/useStore';
 
 const hasNotification = typeof window !== 'undefined' && 'Notification' in window;
 
-export function useNotifications(enabled, { budget, transactions, fixedExpenses, profile }) {
+export function useNotifications() {
+  const { settings, budget, transactions, fixedExpenses } = useStore();
+  const enabled = settings.notifications?.budgetOver;
   const sent = useRef(new Set());
 
   useEffect(() => {

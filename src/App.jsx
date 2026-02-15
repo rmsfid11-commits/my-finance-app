@@ -1,121 +1,107 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { useSwipe } from './hooks/useSwipe';
-import { useAuth } from './hooks/useAuth';
+import { useEffect, useRef, lazy, Suspense } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useStore, CLOUD_KEYS } from './store/useStore';
 import { firebaseEnabled, auth, db } from './firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFAULT_DIVIDENDS, DEFAULT_FIXED_EXPENSES, DEFAULT_TRANSACTIONS, DEFAULT_QUICK_INPUTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS } from './data/initialData';
+import { onAuthStateChanged } from 'firebase/auth';
 import Banner from './components/Banner';
 import Onboarding from './components/Onboarding';
 import AuthScreen from './components/AuthScreen';
-import ErrorBoundary from './components/ErrorBoundary';
 import Toast from './components/Toast';
 import { useNotifications } from './hooks/useNotifications';
-import HomeTab from './components/tabs/HomeTab';
-import InvestTab from './components/tabs/InvestTab';
-import HouseholdTab from './components/tabs/HouseholdTab';
-import BadgeTab from './components/tabs/BadgeTab';
-import StatsTab from './components/tabs/StatsTab';
-import SettingsTab from './components/tabs/SettingsTab';
+const HomeTab = lazy(() => import('./components/tabs/HomeTab'));
+const InvestTab = lazy(() => import('./components/tabs/InvestTab'));
+const HouseholdTab = lazy(() => import('./components/tabs/HouseholdTab'));
+const BadgeTab = lazy(() => import('./components/tabs/BadgeTab'));
+const StatsTab = lazy(() => import('./components/tabs/StatsTab'));
+const SettingsTab = lazy(() => import('./components/tabs/SettingsTab'));
 import { Home, TrendingUp, Wallet, Award, BarChart3, Settings } from 'lucide-react';
 import { fetchAllMarketData, fetchStockPrice } from './utils/api';
 import { formatDate, formatTime, generateId } from './utils/formatters';
+import { haptic } from './utils/haptic';
+import { useSwipe } from './hooks/useSwipe';
 
 const TABS = [
-  { id: 'home', label: '홈', Icon: Home },
-  { id: 'invest', label: '투자', Icon: TrendingUp },
-  { id: 'household', label: '가계부', Icon: Wallet },
-  { id: 'badges', label: '배지', Icon: Award },
-  { id: 'stats', label: '통계', Icon: BarChart3 },
-  { id: 'settings', label: '설정', Icon: Settings },
+  { path: '/', label: '홈', Icon: Home },
+  { path: '/invest', label: '투자', Icon: TrendingUp },
+  { path: '/household', label: '가계부', Icon: Wallet },
+  { path: '/badges', label: '배지', Icon: Award },
+  { path: '/stats', label: '통계', Icon: BarChart3 },
+  { path: '/settings', label: '설정', Icon: Settings },
 ];
 
-const CLOUD_KEYS = ['profile','goals','budget','portfolio','dividends','fixedExpenses','transactions','badges','settings','theme','watchlist','hideAmounts','customQuickInputs','customCategories','paymentMethods','lastBackup','gamification'];
+const pageMotion = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.12 } },
+};
+
+function Page({ children }) {
+  return <motion.div variants={pageMotion} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col">{children}</motion.div>;
+}
 
 function App() {
-  const { user, loading: authLoading } = useAuth();
-  const [skipped, setSkipped] = useState(!firebaseEnabled);
-  const [cloudLoaded, setCloudLoaded] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const store = useStore();
+  const { user, authLoading, skipped, showOnboarding, profile, settings, portfolio, theme, lastBackup, fixedExpenses } = store;
 
-  const [activeTab, setActiveTab] = useState('home');
-  const [profile, setProfile] = useLocalStorage('finance_profile', DEFAULT_PROFILE);
-  const [goals, setGoals] = useLocalStorage('finance_goals', DEFAULT_GOALS);
-  const [budget, setBudget] = useLocalStorage('finance_budget', DEFAULT_BUDGET);
-  const [portfolio, setPortfolio] = useLocalStorage('finance_portfolio', DEFAULT_PORTFOLIO);
-  const [dividends, setDividends] = useLocalStorage('finance_dividends', DEFAULT_DIVIDENDS);
-  const [fixedExpenses, setFixedExpenses] = useLocalStorage('finance_fixed', DEFAULT_FIXED_EXPENSES);
-  const [transactions, setTransactions] = useLocalStorage('finance_transactions', DEFAULT_TRANSACTIONS);
-  const [badges, setBadges] = useLocalStorage('finance_badges', {});
-  const [settings, setSettings] = useLocalStorage('finance_settings', { smsAutoDetect: true, notifications: { fixedExpense: true, budgetOver: true, economic: true, badge: true, report: true } });
-  const [theme, setTheme] = useLocalStorage('finance_theme', 'black');
-  const [watchlist, setWatchlist] = useLocalStorage('finance_watchlist', []);
-  const [hideAmounts, setHideAmounts] = useLocalStorage('finance_hide_amounts', false);
-  const [customQuickInputs, setCustomQuickInputs] = useLocalStorage('finance_quick_inputs', DEFAULT_QUICK_INPUTS);
-  const [customCategories, setCustomCategories] = useLocalStorage('finance_categories', DEFAULT_CATEGORIES);
-  const [paymentMethods, setPaymentMethods] = useLocalStorage('finance_payment_methods', DEFAULT_PAYMENT_METHODS);
-  const [lastBackup, setLastBackup] = useLocalStorage('finance_last_backup', null);
-  const [gamification, setGamification] = useLocalStorage('finance_gamification', { xp: 0, level: 1, streak: 0, lastCheckIn: null, challenges: [], completedChallenges: [] });
-  const [marketData, setMarketData] = useState({});
-  const [stockPrices, setStockPrices] = useState({});
-  const [exchangeRate, setExchangeRate] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  // Auth listener
+  useEffect(() => {
+    if (!firebaseEnabled) { store.setAuthLoading(false); return; }
+    return onAuthStateChanged(auth, u => { store.setUser(u); store.setAuthLoading(false); });
+  }, []);
 
-  // Cloud data map
-  const cloudSetters = { profile: setProfile, goals: setGoals, budget: setBudget, portfolio: setPortfolio, dividends: setDividends, fixedExpenses: setFixedExpenses, transactions: setTransactions, badges: setBadges, settings: setSettings, theme: setTheme, watchlist: setWatchlist, hideAmounts: setHideAmounts, customQuickInputs: setCustomQuickInputs, customCategories: setCustomCategories, paymentMethods: setPaymentMethods, lastBackup: setLastBackup, gamification: setGamification };
-  const cloudData = { profile, goals, budget, portfolio, dividends, fixedExpenses, transactions, badges, settings, theme, watchlist, hideAmounts, customQuickInputs, customCategories, paymentMethods, lastBackup, gamification };
-
-  // Firestore: load on login
+  // Cloud sync: load
+  const cloudLoaded = useRef(false);
   useEffect(() => {
     if (!user || !db) return;
-    const load = async () => {
+    (async () => {
       try {
         const snap = await getDoc(doc(db, 'users', user.uid));
         if (snap.exists()) {
-          const d = snap.data();
-          CLOUD_KEYS.forEach(k => { if (d[k] !== undefined) cloudSetters[k](d[k]); });
+          const d = snap.data(), update = {};
+          CLOUD_KEYS.forEach(k => { if (d[k] !== undefined) update[k] = d[k]; });
+          store.bulkUpdate(update);
         } else {
-          // First login: upload local data
-          await setDoc(doc(db, 'users', user.uid), { ...cloudData, createdAt: new Date().toISOString() });
+          const data = {}; CLOUD_KEYS.forEach(k => { data[k] = store[k]; });
+          await setDoc(doc(db, 'users', user.uid), { ...data, createdAt: new Date().toISOString() });
         }
       } catch (e) { console.error('Firestore load:', e); }
-      setCloudLoaded(true);
-    };
-    load();
+      cloudLoaded.current = true;
+    })();
   }, [user?.uid]);
 
-  // Firestore: debounced save on data change
+  // Cloud sync: debounced save
   const saveTimer = useRef(null);
   const dataRef = useRef('');
   useEffect(() => {
-    if (!user || !db || !cloudLoaded) return;
-    const str = JSON.stringify(cloudData);
+    if (!user || !db || !cloudLoaded.current) return;
+    const data = {}; CLOUD_KEYS.forEach(k => { data[k] = store[k]; });
+    const str = JSON.stringify(data);
     if (str === dataRef.current) return;
     dataRef.current = str;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      try { await setDoc(doc(db, 'users', user.uid), { ...cloudData, updatedAt: new Date().toISOString() }, { merge: true }); }
+      try { await setDoc(doc(db, 'users', user.uid), { ...data, updatedAt: new Date().toISOString() }, { merge: true }); }
       catch (e) { console.error('Firestore save:', e); }
     }, 3000);
     return () => clearTimeout(saveTimer.current);
   });
 
-  const handleLogout = async () => {
-    if (auth) { await signOut(auth); setSkipped(false); }
-  };
-
   // Market data
   useEffect(() => {
-    const load = async () => { const data = await fetchAllMarketData(); setMarketData(data); if (data.exchange) setExchangeRate(data.exchange.rate); };
+    const load = async () => { const data = await fetchAllMarketData(); store.setMarketData(data); if (data.exchange) store.setExchangeRate(data.exchange.rate); };
     load(); const interval = setInterval(load, 60000); return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const load = async () => { const results = await Promise.allSettled(portfolio.map(s => fetchStockPrice(s.symbol))); const prices = {}; portfolio.forEach((s, i) => { if (results[i].status === 'fulfilled' && results[i].value) prices[s.symbol] = results[i].value; }); setStockPrices(prices); };
+    const load = async () => { const results = await Promise.allSettled(portfolio.map(s => fetchStockPrice(s.symbol))); const prices = {}; portfolio.forEach((s, i) => { if (results[i].status === 'fulfilled' && results[i].value) prices[s.symbol] = results[i].value; }); store.setStockPrices(prices); };
     load(); const interval = setInterval(load, 30000); return () => clearInterval(interval);
   }, [portfolio]);
 
+  // Theme
   useEffect(() => {
     if (theme === 'auto') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -126,10 +112,12 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  useEffect(() => { if (!profile.name) setShowOnboarding(true); }, []);
+  // Onboarding
+  useEffect(() => { if (!profile.name) store.setShowOnboarding(true); }, []);
 
+  // Auto fixed expenses
   useEffect(() => {
-    setTransactions(prev => {
+    store.setTransactions(prev => {
       const today = new Date(), day = today.getDate(), month = today.toISOString().substring(0, 7);
       const add = [];
       fixedExpenses.forEach(fe => {
@@ -140,35 +128,32 @@ function App() {
     });
   }, []);
 
+  // Backup reminder
   useEffect(() => {
-    if (lastBackup) { const diff = (Date.now() - new Date(lastBackup).getTime()) / 86400000; if (diff >= 30) setToast({ message: '30일 이상 백업하지 않았어요', action: '설정에서 백업', type: 'warn' }); }
+    if (lastBackup) { const diff = (Date.now() - new Date(lastBackup).getTime()) / 86400000; if (diff >= 30) store.setToast({ message: '30일 이상 백업하지 않았어요', action: '설정에서 백업', type: 'warn' }); }
   }, []);
 
-  useNotifications(settings.notifications?.budgetOver, { budget, transactions, fixedExpenses, profile });
+  useNotifications();
 
-  const txRef = useRef(transactions); txRef.current = transactions;
-  const addTransaction = useCallback((tx) => { if (!tx.auto) { const dup = txRef.current.find(t => t.date === tx.date && t.amount === tx.amount && t.category === tx.category); if (dup && !confirm(`같은 날 같은 금액(${tx.amount?.toLocaleString()}원) ${tx.category} 거래가 있어요. 추가?`)) return; } setTransactions(prev => [tx, ...prev]); }, [setTransactions]);
-  const deleteTransaction = useCallback((id) => { const del = txRef.current.find(t => t.id === id); setTransactions(prev => prev.filter(t => t.id !== id)); if (del) setToast({ message: '삭제됨', undo: () => setTransactions(prev => [del, ...prev]) }); }, [setTransactions]);
-  const updateTransaction = useCallback((id, updates) => setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)), [setTransactions]);
-
+  // Swipe navigation
   const mainRef = useRef(null);
   const navRef = useRef(null);
-  const [navHeight, setNavHeight] = useState(80);
-  const tabIds = TABS.map(t => t.id);
+  const [navHeight, setNavHeight] = [useRef(80), (v) => { navRef._h = v; }];
   useSwipe(mainRef, {
-    onSwipeLeft: () => setActiveTab(prev => { const i = tabIds.indexOf(prev); return i < tabIds.length - 1 ? tabIds[i + 1] : prev; }),
-    onSwipeRight: () => setActiveTab(prev => { const i = tabIds.indexOf(prev); return i > 0 ? tabIds[i - 1] : prev; }),
+    onSwipeLeft: () => { const i = TABS.findIndex(t => t.path === location.pathname); if (i < TABS.length - 1) { haptic(); navigate(TABS[i + 1].path); } },
+    onSwipeRight: () => { const i = TABS.findIndex(t => t.path === location.pathname); if (i > 0) { haptic(); navigate(TABS[i - 1].path); } },
   });
 
+  const navRefEl = useRef(null);
+  const navH = useRef(80);
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const ro = new ResizeObserver(([entry]) => setNavHeight(entry.target.offsetHeight));
-    ro.observe(nav);
-    setNavHeight(nav.offsetHeight);
+    const nav = navRefEl.current; if (!nav) return;
+    const ro = new ResizeObserver(([entry]) => { navH.current = entry.target.offsetHeight; });
+    ro.observe(nav); navH.current = nav.offsetHeight;
     return () => ro.disconnect();
   }, []);
 
+  // Glass touch effects
   useEffect(() => {
     const onStart = (e) => { const glass = e.target.closest('.glass'); if (!glass) return; const rect = glass.getBoundingClientRect(); const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left; const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top; glass.style.setProperty('--touch-x', `${x}px`); glass.style.setProperty('--touch-y', `${y}px`); glass.classList.add('glass-touched'); };
     const onMove = (e) => { const glass = document.querySelector('.glass-touched'); if (!glass) return; const rect = glass.getBoundingClientRect(); const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left; const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top; glass.style.setProperty('--touch-x', `${x}px`); glass.style.setProperty('--touch-y', `${y}px`); };
@@ -179,28 +164,32 @@ function App() {
 
   // Auth gate
   if (authLoading) return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}><div className="text-c-text2 text-sm">로딩중...</div></div>;
-  if (firebaseEnabled && !user && !skipped) return <AuthScreen onSkip={() => setSkipped(true)} />;
-
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup, user, handleLogout, gamification, setGamification };
+  if (firebaseEnabled && !user && !skipped) return <AuthScreen />;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
-      {showOnboarding && <Onboarding profile={profile} setProfile={setProfile} onComplete={() => setShowOnboarding(false)} />}
-      <Toast toast={toast} onDismiss={() => setToast(null)} />
-      <Banner marketData={marketData} exchangeRate={exchangeRate} />
+    <div className="min-h-screen flex flex-col" style={{ paddingBottom: navH.current }}>
+      {showOnboarding && <Onboarding onComplete={() => store.setShowOnboarding(false)} />}
+      <Toast />
+      <Banner />
       <main ref={mainRef} className="flex-1 flex flex-col">
-        {activeTab === 'home' && <HomeTab {...props} />}
-        {activeTab === 'invest' && <InvestTab {...props} />}
-        {activeTab === 'household' && <HouseholdTab {...props} />}
-        {activeTab === 'badges' && <BadgeTab {...props} />}
-        {activeTab === 'stats' && <StatsTab {...props} />}
-        {activeTab === 'settings' && <SettingsTab {...props} />}
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-c-text2 text-sm">로딩중...</div>}>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Page><HomeTab /></Page>} />
+              <Route path="/invest" element={<Page><InvestTab /></Page>} />
+              <Route path="/household" element={<Page><HouseholdTab /></Page>} />
+              <Route path="/badges" element={<Page><BadgeTab /></Page>} />
+              <Route path="/stats" element={<Page><StatsTab /></Page>} />
+              <Route path="/settings" element={<Page><SettingsTab /></Page>} />
+            </Routes>
+          </AnimatePresence>
+        </Suspense>
       </main>
-      <nav ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] glass-nav flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-        {TABS.map(({ id, label, Icon }) => (
-          <button key={id} onClick={() => setActiveTab(id)} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${activeTab === id ? 'text-[#3182F6]' : 'text-c-text3'}`}>
-            <Icon size={20} strokeWidth={activeTab === id ? 2.5 : 1.5} />
-            <span className={`text-[10px] ${activeTab === id ? 'font-bold' : 'font-medium'}`}>{label}</span>
+      <nav ref={navRefEl} className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] glass-nav flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        {TABS.map(({ path, label, Icon }) => (
+          <button key={path} onClick={() => { haptic(); navigate(path); }} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${location.pathname === path ? 'text-[#3182F6]' : 'text-c-text3'}`}>
+            <Icon size={20} strokeWidth={location.pathname === path ? 2.5 : 1.5} />
+            <span className={`text-[10px] ${location.pathname === path ? 'font-bold' : 'font-medium'}`}>{label}</span>
           </button>
         ))}
       </nav>

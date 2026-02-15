@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { formatFullKRW, formatKRW, formatUSD, formatPercent, formatNumber, formatComma } from '../../utils/formatters';
-import { fetchChartData, fetchCryptoPrice, fetchUpbitPrice, searchStock } from '../../utils/api';
+import { fetchChartData, fetchCryptoPrice, fetchUpbitPrice, searchStock, fetchStockPrice } from '../../utils/api';
 import { ECONOMIC_CALENDAR } from '../../data/initialData';
+import { useStore } from '../../store/useStore';
+import { SkeletonCard } from '../Skeleton';
+import { haptic } from '../../utils/haptic';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, DollarSign, Bitcoin, Calculator, Calendar, Plus, Minus, RefreshCw, Search, X, ChevronDown, ChevronUp, Wrench, Trash2, Eye, Target } from 'lucide-react';
 import CustomTooltip from '../CustomTooltip';
@@ -175,7 +178,8 @@ function IndependentStockChart({ symbol }) {
   );
 }
 
-function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividends, goals, watchlist, setWatchlist, hideAmounts }) {
+function InvestTab() {
+  const { portfolio, setPortfolio, stockPrices, exchangeRate, dividends, goals, watchlist, setWatchlist, hideAmounts } = useStore();
   const [subTab, setSubTab] = useState('portfolio');
   return (
     <div className="animate-slide">
@@ -650,7 +654,6 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
     if (q.length < 1) { setSearchResults([]); return; }
     searchTimeout.current = setTimeout(async () => {
       setSearching(true);
-      const { searchStock } = await import('../../utils/api');
       const results = await searchStock(q);
       setSearchResults(results);
       setSearching(false);
@@ -660,7 +663,6 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
   useEffect(() => {
     if (watchlist.length === 0) return;
     const load = async () => {
-      const { fetchStockPrice } = await import('../../utils/api');
       const p = {};
       for (const s of watchlist) { const d = await fetchStockPrice(s.symbol); if (d) p[s.symbol] = d; }
       setPrices(p);

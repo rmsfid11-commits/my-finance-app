@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
+import { useStore } from '../store/useStore';
 import { Wallet, Mail, ArrowLeft } from 'lucide-react';
 
 const ERR_MAP = { 'auth/user-not-found': '계정이 없습니다', 'auth/wrong-password': '비밀번호가 틀렸습니다', 'auth/email-already-in-use': '이미 사용중인 이메일', 'auth/weak-password': '비밀번호 6자 이상', 'auth/invalid-email': '이메일 형식 확인', 'auth/popup-closed-by-user': '' };
 
-function AuthScreen({ onSkip }) {
+function AuthScreen() {
+  const { setSkipped } = useStore();
   const [mode, setMode] = useState('main');
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -46,7 +48,7 @@ function AuthScreen({ onSkip }) {
             <button onClick={() => { setMode('email'); setErr(''); }} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl glass-inner text-c-text font-bold text-sm">
               <Mail size={18} /> 이메일로 시작
             </button>
-            <button onClick={onSkip} className="w-full py-3 text-sm text-c-text3 font-medium">로그인 없이 체험하기</button>
+            <button onClick={() => setSkipped(true)} className="w-full py-3 text-sm text-c-text3 font-medium">로그인 없이 체험하기</button>
           </div>
         ) : (
           <div className="space-y-3">

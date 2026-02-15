@@ -1,12 +1,17 @@
 import { useState, useRef } from 'react';
 import { formatFullKRW } from '../../utils/formatters';
 import { CATEGORIES } from '../../data/initialData';
+import { useStore } from '../../store/useStore';
+import { haptic } from '../../utils/haptic';
 import PrivacyPolicy from '../PrivacyPolicy';
-import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff, Shield, FileText } from 'lucide-react';
+import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff, Shield, FileText, BookOpen, History, X } from 'lucide-react';
 
-function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup, user, handleLogout }) {
+function SettingsTab() {
+  const { profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup, user, handleLogout } = useStore();
   const [activeSection, setActiveSection] = useState(null);
   const [policyType, setPolicyType] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleBackup = () => {
@@ -145,8 +150,10 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
 
         <div className="border-t border-c-border mx-5" />
 
-        {/* 약관 */}
+        {/* 앱 정보 */}
         <div className="px-5 py-4 space-y-2">
+          <button onClick={() => setShowGuide(true)} className="w-full flex items-center gap-3 py-2.5 text-left"><BookOpen size={16} className="text-c-text3" /><span className="text-sm text-c-text2">사용 설명서</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
+          <button onClick={() => setShowChangelog(true)} className="w-full flex items-center gap-3 py-2.5 text-left"><History size={16} className="text-c-text3" /><span className="text-sm text-c-text2">업데이트 내역</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
           <button onClick={() => setPolicyType('privacy')} className="w-full flex items-center gap-3 py-2.5 text-left"><Shield size={16} className="text-c-text3" /><span className="text-sm text-c-text2">개인정보처리방침</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
           <button onClick={() => setPolicyType('terms')} className="w-full flex items-center gap-3 py-2.5 text-left"><FileText size={16} className="text-c-text3" /><span className="text-sm text-c-text2">이용약관</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
         </div>
@@ -154,10 +161,257 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
         <div className="border-t border-c-border mx-5" />
 
         {/* 버전 */}
-        <div className="text-center py-6"><div className="text-xs text-c-text3 font-medium">MyFinance v1.1</div><div className="text-xs text-c-text3">개인 재무관리 앱</div></div>
+        <div className="text-center py-6"><div className="text-xs text-c-text3 font-medium">MyFinance v1.2</div><div className="text-xs text-c-text3">개인 재무관리 앱</div></div>
 
       </div>
       {policyType && <PrivacyPolicy type={policyType} onClose={() => setPolicyType(null)} />}
+
+      {/* 사용 설명서 */}
+      {showGuide && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 animate-fade" onClick={() => setShowGuide(false)}>
+          <div className="glass rounded-t-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 animate-slide" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-c-text">사용 설명서</h2>
+              <button onClick={() => setShowGuide(false)} className="text-c-text3"><X size={20} /></button>
+            </div>
+            <div className="space-y-6 text-sm text-c-text2 leading-relaxed">
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">🏠</span><span className="font-bold text-c-text">홈 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>총 자산, 이번 달 지출, 저축률, 투자 수익을 한눈에 확인</li>
+                  <li>금액 숨기기: 눈 아이콘을 누르면 모든 금액이 가려짐</li>
+                  <li>XP/레벨 시스템: 매일 출석 체크인으로 경험치 획득, 연속 출석 보너스</li>
+                  <li>주간 챌린지: 무지출 3일, 커피 절약, 매일 기록, 예산 수호자 등 6종</li>
+                  <li>지출 속도 게이지: 예산 대비 소진율을 원형 차트로 실시간 확인</li>
+                  <li>AI 인사이트: 저축률, 지출 속도, 예산 초과 자동 분석</li>
+                  <li>카테고리별 도넛 차트: 카테고리 클릭 시 상세 거래 내역 확인</li>
+                  <li>6개월 수입/지출 트렌드 차트</li>
+                  <li>이번주 미니 리포트: 지난주 대비 지출 비교</li>
+                  <li>포트폴리오 요약: 보유 종목 수익률, 월 배당 확인</li>
+                  <li>목표 진행도: 배당 목표, 순자산 목표 게이지</li>
+                  <li>경제 일정: 주요 경제지표 발표 일정 및 포트폴리오 영향</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">📈</span><span className="font-bold text-c-text">투자 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>포트폴리오: 종목 검색/추가/삭제, 실시간 시세, 수익률 확인</li>
+                  <li>캔들스틱 차트: 4시간/일봉/주봉/월봉 타임프레임 전환, 터치 크로스헤어</li>
+                  <li>매수/매도: 거래 기록 및 평균단가 자동 계산</li>
+                  <li>포트폴리오 비중: 파이 차트로 종목별 비중 확인</li>
+                  <li>종목별 도구: 물타기 계산기, 수익 계산기, 목표가 참고</li>
+                  <li>환율: USD/KRW 실시간 환율, 양방향 환율 계산기, 내 투자 환율 영향</li>
+                  <li>코인/김프: BTC·ETH·XRP 바이낸스/업비트 시세, 김치프리미엄 퍼센트</li>
+                  <li>계산기 5종: 복리, 손익분기, 배당, 물타기, 목표자산</li>
+                  <li>관심종목: 보유하지 않은 종목도 실시간 가격 추적</li>
+                  <li>경제일정: 중요도별 표시, 시장 영향 설명, 이번주/다음주 구분</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">💰</span><span className="font-bold text-c-text">가계부 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>빠른 입력: 자주 쓰는 항목 원터치 입력, 직접 입력, 음성/텍스트</li>
+                  <li>영수증 OCR: 카메라로 영수증 촬영 시 금액·날짜·장소 자동 인식</li>
+                  <li>달력 뷰: 날짜별 지출 내역을 달력에서 확인, 날짜 클릭 시 상세</li>
+                  <li>일일 리포트: 오늘 지출 내역 및 카테고리별 합계</li>
+                  <li>검색: 장소, 메모, 카테고리, 금액 범위로 거래 검색</li>
+                  <li>주간/월간/비교/연간: 기간별 지출 분석, 전월 비교 리포트</li>
+                  <li>수입 관리: 월급 외 부수입 기록</li>
+                  <li>고정지출: 매월 자동 등록되는 고정 지출 설정 (날짜별)</li>
+                  <li>할부 관리: 할부 결제 현황 및 남은 회차 추적</li>
+                  <li>챌린지: 지출 줄이기 미션</li>
+                  <li>패턴 분석: 요일별/시간대별 지출 습관 분석</li>
+                  <li>환불 처리: 거래별 환불 표시, 통계에서 자동 제외</li>
+                  <li>사진 첨부: 거래에 영수증 사진 첨부 가능</li>
+                  <li>CSV 내보내기: 거래 내역을 엑셀 파일로 다운로드</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">🏅</span><span className="font-bold text-c-text">배지 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>활동에 따라 자동으로 배지 획득 (첫 기록, 투자 시작, 7일 연속 등)</li>
+                  <li>레벨 시스템: 배지 수에 따른 레벨 업, 다음 레벨 진행바</li>
+                  <li>보상 시스템: 일정 배지 달성 시 보상 획득</li>
+                  <li>카테고리별 모아보기, 최근 획득 배지 표시</li>
+                  <li>배지 획득 시 축하 팝업 및 햅틱 피드백</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">📊</span><span className="font-bold text-c-text">통계 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>월간 요약: 지출/수입/저축률/예산 소진율 한눈에 확인</li>
+                  <li>소비 패턴: 요일별 히트맵, 카테고리별 레이더 차트</li>
+                  <li>카테고리별 지출: 도넛 차트, 예산 대비 바 차트</li>
+                  <li>일별 지출 추이: 라인 차트, 날짜 클릭 시 상세 내역</li>
+                  <li>예산 분석: 카테고리별 예산 대비 실제 지출 비교</li>
+                  <li>순자산 추이: 투자 + 저축 기반 자산 그래프</li>
+                  <li>절약 팁: 낭비 분석 및 절약 가능 금액 제안</li>
+                  <li>목표 달성 예측: 배당 목표, 순자산 목표 달성 시점 예측</li>
+                  <li>각 섹션을 탭하면 상세 분석 확인 가능 (인터랙티브)</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2"><span className="text-base">⚙️</span><span className="font-bold text-c-text">설정 탭</span></div>
+                <ul className="space-y-1.5 ml-6 list-disc">
+                  <li>프로필: 이름, 나이, 직업, 월급, 거주형태 설정 (자동 저장)</li>
+                  <li>목표: 월 저축, 배당, 순자산 목표 설정</li>
+                  <li>예산: 카테고리별 월 예산 설정</li>
+                  <li>알림: 고정지출, 예산초과, 경제지표, 배지, 리포트 알림 개별 관리</li>
+                  <li>테마: 7가지 테마 (Black, Notion, Ocean, Forest, Rose, Midnight, Auto)</li>
+                  <li>데이터: JSON 백업/복원, CSV 내보내기, 전체 초기화</li>
+                  <li>클라우드: Google 로그인 시 자동 동기화 (실시간)</li>
+                  <li>사용 설명서 / 업데이트 내역 / 개인정보처리방침 / 이용약관</li>
+                </ul>
+              </div>
+
+              <div className="glass-inner rounded-2xl p-4 space-y-2">
+                <div className="font-bold text-c-text text-xs">💡 꿀팁</div>
+                <ul className="space-y-1 ml-4 list-disc text-xs">
+                  <li>좌우 스와이프로 탭 간 빠르게 이동 가능</li>
+                  <li>금액을 터치하면 직접 수정 가능 (수입, 목표 등)</li>
+                  <li>매일 앱을 열면 출석 스트릭이 쌓이고 XP 보너스 증가</li>
+                  <li>주간 챌린지 완료 시 XP 보상 → 레벨업으로 레벨 칭호 획득</li>
+                  <li>영수증 OCR로 사진 한 장으로 거래 자동 입력</li>
+                  <li>정기적으로 데이터 백업을 권장합니다</li>
+                  <li>Google 로그인하면 기기 간 데이터 실시간 동기화</li>
+                  <li>홈 화면에 추가(PWA)하면 네이티브 앱처럼 사용 가능</li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 업데이트 내역 */}
+      {showChangelog && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 animate-fade" onClick={() => setShowChangelog(false)}>
+          <div className="glass rounded-t-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 animate-slide" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-c-text">업데이트 내역</h2>
+              <button onClick={() => setShowChangelog(false)} className="text-c-text3"><X size={20} /></button>
+            </div>
+            <div className="space-y-6 text-sm text-c-text2 leading-relaxed">
+
+              {/* v1.2 */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 bg-[#3182F6] text-white text-xs font-bold rounded-full">v1.2</span>
+                  <span className="text-xs text-c-text3">최신</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#00C48C] mb-1">✦ 새 기능</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>영수증 OCR 스캔 — 카메라로 영수증 촬영 시 금액·날짜·장소 자동 인식</li>
+                      <li>Zustand 상태관리 — 전역 스토어 도입으로 성능 및 안정성 향상</li>
+                      <li>React Router 도입 — URL 기반 탭 네비게이션, 브라우저 뒤로가기 지원</li>
+                      <li>페이지 전환 애니메이션 — Framer Motion 기반 부드러운 전환 효과</li>
+                      <li>햅틱 피드백 — 탭 전환, 버튼 클릭 시 진동 피드백</li>
+                      <li>로딩 스켈레톤 UI — 데이터 로딩 시 깜빡임 없는 플레이스홀더</li>
+                      <li>오프라인 푸시 알림 — 서비스워커 기반 백그라운드 알림</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#3182F6] mb-1">✦ 개선</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>코드 스플리팅 — 탭별 Lazy Loading으로 초기 로딩 속도 개선</li>
+                      <li>번들 최적화 — React, Firebase, Recharts, Framer Motion 청크 분리</li>
+                      <li>서비스워커 캐시 전략 개선 — HTML은 네트워크 우선, 에셋은 캐시 우선</li>
+                      <li>오프라인 거래 동기화 — 네트워크 복구 시 자동 업로드</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-c-border" />
+
+              {/* v1.1 */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 bg-c-subtle text-c-text text-xs font-bold rounded-full">v1.1</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#00C48C] mb-1">✦ 새 기능</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>게이미피케이션 시스템 — 스트릭, XP, 레벨, 주간 챌린지</li>
+                      <li>홈 대시보드 리디자인 — 차트, 인터랙티브 위젯 추가</li>
+                      <li>에러 바운더리 — 앱 크래시 시 복구 화면 제공</li>
+                      <li>푸시 알림 — 예산 초과, 고정지출, 배지 획득 알림</li>
+                      <li>개인정보처리방침 및 이용약관 페이지 추가</li>
+                      <li>빌드 최적화 — 코드 스플리팅, 번들 크기 축소</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#3182F6] mb-1">✦ 버그 수정</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>검색/거래 모달이 하단 네비에 가려지는 문제 수정</li>
+                      <li>카카오톡 등 인앱 브라우저에서 알림 API 크래시 수정</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-c-border" />
+
+              {/* v1.0 */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 bg-c-subtle text-c-text text-xs font-bold rounded-full">v1.0</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#00C48C] mb-1">✦ 새 기능</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>Firebase 로그인 및 클라우드 동기화</li>
+                      <li>통계탭 18개 분석 기능 — 소비패턴, 예산비교, 순자산 추이 등</li>
+                      <li>가계부 10개 기능 — 달력뷰, 검색, 수입관리, 월비교, 연간리포트, 할부관리, 환불처리, CSV내보내기, 사진첨부</li>
+                      <li>투자탭 — 캔들스틱 차트, 타임프레임, 종목 검색, 관심종목</li>
+                      <li>배지 시스템 — 활동 기반 자동 배지 획득</li>
+                      <li>글래스모피즘 UI — 7가지 테마 지원</li>
+                      <li>15개 UX 개선 — 온보딩, 토스트, 배지 축하 애니메이션 등</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#3182F6] mb-1">✦ 개선</div>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>가계부 서브탭 UI 통일 및 대형화</li>
+                      <li>하단 네비게이션 불투명 처리, 콘텐츠 겹침 제거</li>
+                      <li>통계탭 전체 인터랙티브화 — 모든 섹션 클릭/확장</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-c-border" />
+
+              {/* v0.1 */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 bg-c-subtle text-c-text text-xs font-bold rounded-full">v0.1</span>
+                  <span className="text-xs text-c-text3">최초 릴리즈</span>
+                </div>
+                <ul className="space-y-1 ml-4 list-disc">
+                  <li>가계부 기본 기능 — 지출 입력, 카테고리 분류</li>
+                  <li>투자 포트폴리오 관리</li>
+                  <li>환율/코인 시세 조회</li>
+                  <li>기본 통계 및 차트</li>
+                  <li>PWA 지원 — 홈 화면에 추가 가능</li>
+                  <li>GitHub Pages 자동 배포</li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

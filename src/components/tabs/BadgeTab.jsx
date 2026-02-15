@@ -1,8 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { BADGE_DEFINITIONS, LEVEL_THRESHOLDS, BADGE_REWARDS } from '../../data/initialData';
+import { useStore } from '../../store/useStore';
+import { haptic, hapticSuccess } from '../../utils/haptic';
 import { Lock, ChevronDown, ChevronUp, Gift, X } from 'lucide-react';
 
-function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setToast }) {
+function BadgeTab() {
+  const { badges, setBadges, transactions, portfolio, dividends, setToast } = useStore();
   const [expandedCat, setExpandedCat] = useState(null);
   const [celebration, setCelebration] = useState(null);
   const prevCount = useRef(Object.keys(badges).length);
@@ -26,7 +29,7 @@ function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setTo
     if (newCount > prevCount.current) {
       const newBadgeIds = Object.keys(earned).filter(k => !badges[k]);
       const newBadge = BADGE_DEFINITIONS.find(b => newBadgeIds.includes(b.id));
-      if (newBadge) setCelebration(newBadge);
+      if (newBadge) { setCelebration(newBadge); hapticSuccess(); }
       setBadges(earned);
     }
     prevCount.current = newCount;
@@ -54,7 +57,7 @@ function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setTo
           <div className="relative glass rounded-3xl p-8 mx-6 max-w-sm text-center animate-pop" onClick={e => e.stopPropagation()}>
             <button onClick={() => setCelebration(null)} className="absolute top-3 right-3 text-c-text3"><X size={18} /></button>
             <div className="w-20 h-20 rounded-full bg-[#FF9F43]/20 flex items-center justify-center mx-auto mb-4 animate-bounce-badge">
-              <span className="text-3xl font-bold text-[#FF9F43]">{celebration.name[0]}</span>
+              <span className="text-3xl">{celebration.icon}</span>
             </div>
             <div className="text-lg font-bold text-c-text mb-1">배지 획득!</div>
             <div className="text-xl font-black text-[#FF9F43] mb-2">{celebration.name}</div>
@@ -80,7 +83,7 @@ function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setTo
         {/* 최근 획득 */}
         {recent.length > 0 && (<>
           <div className="border-t border-c-border mx-5" />
-          <div className="px-5 py-4"><h2 className="text-sm font-bold mb-4 text-c-text">최근 획득 배지</h2><div className="flex gap-3">{recent.map(b => <div key={b.id} className="flex-1 text-center glass-inner rounded-2xl p-4"><div className="w-10 h-10 rounded-full mx-auto mb-1.5 bg-[#FF9F43]/15 flex items-center justify-center text-sm font-bold text-[#FF9F43]">{b.name[0]}</div><div className="text-xs font-bold text-c-text">{b.name}</div><div className="text-[10px] text-c-text2 mt-0.5">{b.earnedDate}</div></div>)}</div></div>
+          <div className="px-5 py-4"><h2 className="text-sm font-bold mb-4 text-c-text">최근 획득 배지</h2><div className="flex gap-3">{recent.map(b => <div key={b.id} className="flex-1 text-center glass-inner rounded-2xl p-4"><div className="w-10 h-10 rounded-full mx-auto mb-1.5 bg-[#FF9F43]/15 flex items-center justify-center text-lg">{b.icon}</div><div className="text-xs font-bold text-c-text">{b.name}</div><div className="text-[10px] text-c-text2 mt-0.5">{b.earnedDate}</div></div>)}</div></div>
         </>)}
 
         <div className="border-t border-c-border mx-5" />
@@ -90,7 +93,7 @@ function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setTo
           const ce = list.filter(b => b.isEarned).length; const isExp = expandedCat === cat;
           return (<div key={cat}>
             <button onClick={() => setExpandedCat(isExp ? null : cat)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-c-subtle transition-colors"><div className="flex items-center gap-2"><span className="text-sm font-bold text-c-text">{cat}</span><span className="text-xs text-c-text2 font-medium">({ce}/{list.length})</span></div>{isExp ? <ChevronUp size={16} className="text-c-text2" /> : <ChevronDown size={16} className="text-c-text2" />}</button>
-            {isExp && <div className="px-5 pb-4 grid grid-cols-3 gap-2.5">{list.map(b => <div key={b.id} className={`text-center p-4 rounded-2xl transition-all ${b.isEarned ? 'bg-[#FF9F43]/8 border border-[#FF9F43]/20' : 'glass-inner opacity-40'}`}><div className="w-9 h-9 rounded-full mx-auto mb-1.5 flex items-center justify-center text-xs font-bold" style={b.isEarned ? {backgroundColor: 'rgba(255,159,67,0.15)', color: '#FF9F43'} : {}}>{b.isEarned ? b.name[0] : <Lock size={18} className="text-c-text2" />}</div><div className="text-xs font-bold text-c-text">{b.name}</div><div className="text-[10px] text-c-text2 mt-0.5">{b.desc}</div></div>)}</div>}
+            {isExp && <div className="px-5 pb-4 grid grid-cols-3 gap-2.5">{list.map(b => <div key={b.id} className={`text-center p-4 rounded-2xl transition-all ${b.isEarned ? 'bg-[#FF9F43]/8 border border-[#FF9F43]/20' : 'glass-inner opacity-40'}`}><div className="w-9 h-9 rounded-full mx-auto mb-1.5 flex items-center justify-center text-xs font-bold" style={b.isEarned ? {backgroundColor: 'rgba(255,159,67,0.15)', color: '#FF9F43'} : {}}>{b.isEarned ? <span className="text-lg">{b.icon}</span> : <Lock size={18} className="text-c-text2" />}</div><div className="text-xs font-bold text-c-text">{b.name}</div><div className="text-[10px] text-c-text2 mt-0.5">{b.desc}</div></div>)}</div>}
             <div className="border-t border-c-border mx-5" />
           </div>);
         })}

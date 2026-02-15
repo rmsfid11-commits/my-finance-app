@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { formatFullKRW, formatKRW, formatPercent, formatUSD } from '../../utils/formatters';
 import { CATEGORY_COLORS, ECONOMIC_CALENDAR } from '../../data/initialData';
+import { useStore } from '../../store/useStore';
+import { SkeletonCard, SkeletonChart } from '../Skeleton';
+import { haptic } from '../../utils/haptic';
 import EditableNumber from '../EditableNumber';
 import CountUp from '../CountUp';
 import CustomTooltip from '../CustomTooltip';
@@ -38,7 +41,8 @@ const getLevelInfo = (xp) => {
 
 const LEVEL_TITLES = ['뉴비', '절약 입문자', '알뜰 시민', '재테크 루키', '머니 세이버', '저축 전사', '투자 탐험가', '재무 마스터', '부의 설계자', '경제적 자유인', '금융 전설', '돈의 신'];
 
-function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stockPrices, exchangeRate, transactions, dividends, fixedExpenses, hideAmounts, setHideAmounts, customCategories, gamification, setGamification }) {
+function HomeTab() {
+  const { profile, setProfile, goals, setGoals, budget, portfolio, stockPrices, exchangeRate, transactions, dividends, fixedExpenses, hideAmounts, setHideAmounts, customCategories, gamification, setGamification } = useStore();
   const [showAllTx, setShowAllTx] = useState(false);
   const [selectedCat, setSelectedCat] = useState(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
