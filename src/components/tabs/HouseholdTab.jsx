@@ -42,7 +42,7 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
             </button>
           ))}
         </div>
-        {subTab === 'quick' && <QuickInput addTransaction={addTransaction} hideAmounts={hideAmounts} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} customCategories={customCategories} setCustomCategories={setCustomCategories} paymentMethods={paymentMethods} catNames={catNames} />}
+        {subTab === 'quick' && <QuickInput addTransaction={addTransaction} hideAmounts={hideAmounts} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} customCategories={customCategories} setCustomCategories={setCustomCategories} paymentMethods={paymentMethods} catNames={catNames} transactions={transactions} deleteTransaction={deleteTransaction} updateTransaction={updateTransaction} />}
         {subTab === 'daily' && <DailyView transactions={transactions} budget={budget} deleteTransaction={deleteTransaction} updateTransaction={updateTransaction} hideAmounts={hideAmounts} customCategories={customCategories} paymentMethods={paymentMethods} catNames={catNames} />}
         {subTab === 'weekly' && <WeeklyView transactions={transactions} budget={budget} hideAmounts={hideAmounts} />}
         {subTab === 'monthly' && <MonthlyView transactions={transactions} budget={budget} setBudget={setBudget} profile={profile} fixedExpenses={fixedExpenses} hideAmounts={hideAmounts} customCategories={customCategories} catNames={catNames} />}
@@ -55,7 +55,7 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
 }
 
 /* ─── QuickInput ─── */
-function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, catNames }) {
+function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, catNames, transactions, deleteTransaction, updateTransaction }) {
   const [showManual, setShowManual] = useState(false);
   const [showSMS, setShowSMS] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -65,6 +65,21 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
   const [smsText, setSmsText] = useState('');
   const [smsPayment, setSmsPayment] = useState('카드');
   const [showCatManage, setShowCatManage] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
+  const today = new Date().toISOString().split('T')[0];
+  const recentTx = useMemo(() => transactions.filter(t => t.date === today).sort((a, b) => b.time.localeCompare(a.time)).slice(0, 10), [transactions, today]);
+
+  const startEditTx = (tx) => {
+    setEditingId(tx.id);
+    setEditForm({ amount: tx.amount, category: tx.category, place: tx.place || '', memo: tx.memo || '', payment: tx.payment || '카드' });
+  };
+
+  const saveEditTx = () => {
+    updateTransaction(editingId, { amount: parseInt(editForm.amount) || 0, category: editForm.category, place: editForm.place, memo: editForm.memo, payment: editForm.payment });
+    setEditingId(null);
+  };
 
   const handleQuick = (item) => {
     const now = new Date();
@@ -170,6 +185,49 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
           <textarea value={smsText} onChange={e => setSmsText(e.target.value)} placeholder={"카드 사용 문자를 붙여넣기 하세요\n예: [신한] 15,000원 승인 스타벅스"} rows={3} className="w-full border border-c-border text-c-text rounded-2xl p-3 text-sm bg-transparent" />
           <div><label className="text-xs text-c-text2">결제수단</label><select value={smsPayment} onChange={e => setSmsPayment(e.target.value)}>{paymentMethods.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           <button onClick={handleSMS} className="w-full btn-primary py-3">인식하기</button>
+        </div>
+      )}
+
+      {/* 최근 입력 내역 */}
+      {recentTx.length > 0 && (
+        <div>
+          <h3 className="font-bold text-lg text-c-text mb-4">오늘 입력한 내역</h3>
+          <div className="space-y-1">
+            {recentTx.map(tx => (
+              <div key={tx.id}>
+                {editingId === tx.id ? (
+                  <div className="p-3 border border-[#3182F6]/30 rounded-xl space-y-2 animate-fade">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><label className="text-xs text-c-text2">금액</label><input type="number" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} /></div>
+                      <div><label className="text-xs text-c-text2">카테고리</label><select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })}>{catNames.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><label className="text-xs text-c-text2">장소</label><input type="text" value={editForm.place} onChange={e => setEditForm({ ...editForm, place: e.target.value })} /></div>
+                      <div><label className="text-xs text-c-text2">결제수단</label><select value={editForm.payment} onChange={e => setEditForm({ ...editForm, payment: e.target.value })}>{paymentMethods.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+                    </div>
+                    <div><label className="text-xs text-c-text2">메모</label><input type="text" value={editForm.memo} onChange={e => setEditForm({ ...editForm, memo: e.target.value })} /></div>
+                    <div className="flex gap-2">
+                      <button onClick={saveEditTx} className="flex-1 btn-primary py-1.5 text-xs flex items-center justify-center gap-1"><Check size={12} /> 저장</button>
+                      <button onClick={() => setEditingId(null)} className="flex-1 py-1.5 text-xs border border-c-border rounded-xl text-c-text2">취소</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 py-3 border-b border-c-border last:border-0">
+                    <div className="text-lg">{getCatIcon(customCategories, tx.category)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-medium text-c-text">{tx.place || tx.category}</div>
+                      <div className="text-sm text-c-text2">{tx.time} · <span style={{ color: getCatColor(customCategories, tx.category) }}>{tx.category}</span>{tx.payment && <span className="ml-1 text-c-text3">· {tx.payment}</span>}</div>
+                    </div>
+                    <div className="text-right flex items-center gap-2 shrink-0">
+                      <span className="text-base font-bold text-red-500">{hideAmounts ? '•••••' : `-${formatFullKRW(tx.amount)}`}</span>
+                      <button onClick={() => startEditTx(tx)} className="text-c-text3 hover:text-[#3182F6] transition-colors p-1"><Pencil size={15} /></button>
+                      <button onClick={() => deleteTransaction(tx.id)} className="text-c-text3 hover:text-red-400 transition-colors p-1"><Trash2 size={15} /></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
