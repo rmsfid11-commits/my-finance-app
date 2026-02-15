@@ -28,17 +28,17 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
       <div className="glass flex-1 flex flex-col">
         <div className="grid grid-cols-4 border-b border-c-border">
           {SUB_TABS.slice(0, 4).map(({ id, label }, i) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`py-4 text-sm font-semibold text-center transition-all relative ${i < 3 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
+            <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-base font-bold text-center transition-all relative ${i < 3 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
               {label}
-              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full" />}
+              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full" />}
             </button>
           ))}
         </div>
         <div className="grid grid-cols-3 border-b border-c-border">
           {SUB_TABS.slice(4).map(({ id, label }, i) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`py-4 text-sm font-semibold text-center transition-all relative ${i < 2 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
+            <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-base font-bold text-center transition-all relative ${i < 2 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
               {label}
-              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full" />}
+              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full" />}
             </button>
           ))}
         </div>
