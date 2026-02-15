@@ -292,7 +292,7 @@ function CategoryManager({ customCategories, setCustomCategories, showCatManage,
 }
 
 /* ─── CalendarView (NEW) ─── */
-function CalendarView({ transactions, hideAmounts, customCategories }) {
+function CalendarView({ transactions, hideAmounts, customCategories, deleteTransaction }) {
   const [month, setMonth] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
   const [selDate, setSelDate] = useState(null);
 
@@ -328,7 +328,7 @@ function CalendarView({ transactions, hideAmounts, customCategories }) {
         <div>
           <h4 className="font-bold text-base text-c-text mb-2">{selDate} 내역</h4>
           {selTx.length > 0
-            ? selTx.map(tx => <TxRow key={tx.id} tx={tx} hideAmounts={hideAmounts} customCategories={customCategories} />)
+            ? selTx.map(tx => <TxRow key={tx.id} tx={tx} hideAmounts={hideAmounts} customCategories={customCategories} onDelete={deleteTransaction} />)
             : <div className="text-sm text-c-text3 text-center py-4">내역 없음</div>}
         </div>
       )}
