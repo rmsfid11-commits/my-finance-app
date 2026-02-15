@@ -30,6 +30,13 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+        env:
+          VITE_FB_KEY: ${{ secrets.VITE_FB_KEY }}
+          VITE_FB_DOMAIN: ${{ secrets.VITE_FB_DOMAIN }}
+          VITE_FB_PROJECT: ${{ secrets.VITE_FB_PROJECT }}
+          VITE_FB_BUCKET: ${{ secrets.VITE_FB_BUCKET }}
+          VITE_FB_SENDER: ${{ secrets.VITE_FB_SENDER }}
+          VITE_FB_APP: ${{ secrets.VITE_FB_APP }}
 
       - uses: actions/configure-pages@v4
 

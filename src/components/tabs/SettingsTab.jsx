@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { formatFullKRW } from '../../utils/formatters';
 import { CATEGORIES } from '../../data/initialData';
-import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles } from 'lucide-react';
+import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff } from 'lucide-react';
 
-function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup }) {
+function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup, user, handleLogout }) {
   const [activeSection, setActiveSection] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -125,8 +125,26 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
 
         <div className="border-t border-c-border mx-5" />
 
+        {/* 계정 */}
+        {user ? (
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#00C48C]/10 flex items-center justify-center"><Cloud size={20} className="text-[#00C48C]" /></div>
+              <div className="flex-1"><div className="text-sm font-bold text-c-text">{user.displayName || user.email}</div><div className="text-xs text-[#00C48C] font-medium">클라우드 동기화 중</div></div>
+            </div>
+            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-3.5 glass-inner rounded-2xl text-sm font-semibold text-c-text2"><LogOut size={16} /> 로그아웃</button>
+          </div>
+        ) : (
+          <div className="px-5 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#FF9F43]/10 flex items-center justify-center"><CloudOff size={20} className="text-[#FF9F43]" /></div>
+            <div><div className="text-sm font-bold text-c-text">오프라인 모드</div><div className="text-xs text-[#FF9F43] font-medium">로그인하면 클라우드에 저장됩니다</div></div>
+          </div>
+        )}
+
+        <div className="border-t border-c-border mx-5" />
+
         {/* 버전 */}
-        <div className="text-center py-6"><div className="text-xs text-c-text3 font-medium">MyFinance v1.0</div><div className="text-xs text-c-text3">개인 재무관리 앱</div></div>
+        <div className="text-center py-6"><div className="text-xs text-c-text3 font-medium">MyFinance v1.1</div><div className="text-xs text-c-text3">개인 재무관리 앱</div></div>
 
       </div>
     </div>

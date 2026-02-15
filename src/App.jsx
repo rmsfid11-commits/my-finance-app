@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useSwipe } from './hooks/useSwipe';
+import { useAuth } from './hooks/useAuth';
+import { firebaseEnabled, auth, db } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFAULT_DIVIDENDS, DEFAULT_FIXED_EXPENSES, DEFAULT_TRANSACTIONS, DEFAULT_QUICK_INPUTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS } from './data/initialData';
 import Banner from './components/Banner';
 import Onboarding from './components/Onboarding';
+import AuthScreen from './components/AuthScreen';
 import Toast from './components/Toast';
 import HomeTab from './components/tabs/HomeTab';
 import InvestTab from './components/tabs/InvestTab';
@@ -24,7 +29,13 @@ const TABS = [
   { id: 'settings', label: '설정', Icon: Settings },
 ];
 
+const CLOUD_KEYS = ['profile','goals','budget','portfolio','dividends','fixedExpenses','transactions','badges','settings','theme','watchlist','hideAmounts','customQuickInputs','customCategories','paymentMethods','lastBackup'];
+
 function App() {
+  const { user, loading: authLoading } = useAuth();
+  const [skipped, setSkipped] = useState(!firebaseEnabled);
+  const [cloudLoaded, setCloudLoaded] = useState(false);
+
   const [activeTab, setActiveTab] = useState('home');
   const [profile, setProfile] = useLocalStorage('finance_profile', DEFAULT_PROFILE);
   const [goals, setGoals] = useLocalStorage('finance_goals', DEFAULT_GOALS);
@@ -41,13 +52,57 @@ function App() {
   const [customQuickInputs, setCustomQuickInputs] = useLocalStorage('finance_quick_inputs', DEFAULT_QUICK_INPUTS);
   const [customCategories, setCustomCategories] = useLocalStorage('finance_categories', DEFAULT_CATEGORIES);
   const [paymentMethods, setPaymentMethods] = useLocalStorage('finance_payment_methods', DEFAULT_PAYMENT_METHODS);
+  const [lastBackup, setLastBackup] = useLocalStorage('finance_last_backup', null);
   const [marketData, setMarketData] = useState({});
   const [stockPrices, setStockPrices] = useState({});
   const [exchangeRate, setExchangeRate] = useState(null);
   const [toast, setToast] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [lastBackup, setLastBackup] = useLocalStorage('finance_last_backup', null);
 
+  // Cloud data map
+  const cloudSetters = { profile: setProfile, goals: setGoals, budget: setBudget, portfolio: setPortfolio, dividends: setDividends, fixedExpenses: setFixedExpenses, transactions: setTransactions, badges: setBadges, settings: setSettings, theme: setTheme, watchlist: setWatchlist, hideAmounts: setHideAmounts, customQuickInputs: setCustomQuickInputs, customCategories: setCustomCategories, paymentMethods: setPaymentMethods, lastBackup: setLastBackup };
+  const cloudData = { profile, goals, budget, portfolio, dividends, fixedExpenses, transactions, badges, settings, theme, watchlist, hideAmounts, customQuickInputs, customCategories, paymentMethods, lastBackup };
+
+  // Firestore: load on login
+  useEffect(() => {
+    if (!user || !db) return;
+    const load = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          CLOUD_KEYS.forEach(k => { if (d[k] !== undefined) cloudSetters[k](d[k]); });
+        } else {
+          // First login: upload local data
+          await setDoc(doc(db, 'users', user.uid), { ...cloudData, createdAt: new Date().toISOString() });
+        }
+      } catch (e) { console.error('Firestore load:', e); }
+      setCloudLoaded(true);
+    };
+    load();
+  }, [user?.uid]);
+
+  // Firestore: debounced save on data change
+  const saveTimer = useRef(null);
+  const dataRef = useRef('');
+  useEffect(() => {
+    if (!user || !db || !cloudLoaded) return;
+    const str = JSON.stringify(cloudData);
+    if (str === dataRef.current) return;
+    dataRef.current = str;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try { await setDoc(doc(db, 'users', user.uid), { ...cloudData, updatedAt: new Date().toISOString() }, { merge: true }); }
+      catch (e) { console.error('Firestore save:', e); }
+    }, 3000);
+    return () => clearTimeout(saveTimer.current);
+  });
+
+  const handleLogout = async () => {
+    if (auth) { await signOut(auth); setSkipped(false); }
+  };
+
+  // Market data
   useEffect(() => {
     const load = async () => { const data = await fetchAllMarketData(); setMarketData(data); if (data.exchange) setExchangeRate(data.exchange.rate); };
     load(); const interval = setInterval(load, 60000); return () => clearInterval(interval);
@@ -68,10 +123,8 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // #1 온보딩
   useEffect(() => { if (!profile.name) setShowOnboarding(true); }, []);
 
-  // #5 고정지출 자동 거래 생성
   useEffect(() => {
     setTransactions(prev => {
       const today = new Date(), day = today.getDate(), month = today.toISOString().substring(0, 7);
@@ -84,12 +137,10 @@ function App() {
     });
   }, []);
 
-  // #14 백업 리마인더
   useEffect(() => {
     if (lastBackup) { const diff = (Date.now() - new Date(lastBackup).getTime()) / 86400000; if (diff >= 30) setToast({ message: '30일 이상 백업하지 않았어요', action: '설정에서 백업', type: 'warn' }); }
   }, []);
 
-  // #15 중복 감지 + #7 삭제 Undo
   const txRef = useRef(transactions); txRef.current = transactions;
   const addTransaction = useCallback((tx) => { if (!tx.auto) { const dup = txRef.current.find(t => t.date === tx.date && t.amount === tx.amount && t.category === tx.category); if (dup && !confirm(`같은 날 같은 금액(${tx.amount?.toLocaleString()}원) ${tx.category} 거래가 있어요. 추가?`)) return; } setTransactions(prev => [tx, ...prev]); }, [setTransactions]);
   const deleteTransaction = useCallback((id) => { const del = txRef.current.find(t => t.id === id); setTransactions(prev => prev.filter(t => t.id !== id)); if (del) setToast({ message: '삭제됨', undo: () => setTransactions(prev => [del, ...prev]) }); }, [setTransactions]);
@@ -113,49 +164,19 @@ function App() {
     return () => ro.disconnect();
   }, []);
 
-  // Glass touch glow effect
   useEffect(() => {
-    const onStart = (e) => {
-      const glass = e.target.closest('.glass');
-      if (!glass) return;
-      const rect = glass.getBoundingClientRect();
-      const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left;
-      const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
-      glass.style.setProperty('--touch-x', `${x}px`);
-      glass.style.setProperty('--touch-y', `${y}px`);
-      glass.classList.add('glass-touched');
-    };
-    const onMove = (e) => {
-      const glass = document.querySelector('.glass-touched');
-      if (!glass) return;
-      const rect = glass.getBoundingClientRect();
-      const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left;
-      const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
-      glass.style.setProperty('--touch-x', `${x}px`);
-      glass.style.setProperty('--touch-y', `${y}px`);
-    };
-    const onEnd = () => {
-      document.querySelectorAll('.glass-touched').forEach(el => {
-        el.classList.remove('glass-touched');
-      });
-    };
-    document.addEventListener('touchstart', onStart, { passive: true });
-    document.addEventListener('touchmove', onMove, { passive: true });
-    document.addEventListener('touchend', onEnd);
-    document.addEventListener('mousedown', onStart);
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onEnd);
-    return () => {
-      document.removeEventListener('touchstart', onStart);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-      document.removeEventListener('mousedown', onStart);
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onEnd);
-    };
+    const onStart = (e) => { const glass = e.target.closest('.glass'); if (!glass) return; const rect = glass.getBoundingClientRect(); const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left; const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top; glass.style.setProperty('--touch-x', `${x}px`); glass.style.setProperty('--touch-y', `${y}px`); glass.classList.add('glass-touched'); };
+    const onMove = (e) => { const glass = document.querySelector('.glass-touched'); if (!glass) return; const rect = glass.getBoundingClientRect(); const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left; const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top; glass.style.setProperty('--touch-x', `${x}px`); glass.style.setProperty('--touch-y', `${y}px`); };
+    const onEnd = () => { document.querySelectorAll('.glass-touched').forEach(el => el.classList.remove('glass-touched')); };
+    document.addEventListener('touchstart', onStart, { passive: true }); document.addEventListener('touchmove', onMove, { passive: true }); document.addEventListener('touchend', onEnd); document.addEventListener('mousedown', onStart); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onEnd);
+    return () => { document.removeEventListener('touchstart', onStart); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onEnd); document.removeEventListener('mousedown', onStart); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onEnd); };
   }, []);
 
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup };
+  // Auth gate
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}><div className="text-c-text2 text-sm">로딩중...</div></div>;
+  if (firebaseEnabled && !user && !skipped) return <AuthScreen onSkip={() => setSkipped(true)} />;
+
+  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup, user, handleLogout };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
