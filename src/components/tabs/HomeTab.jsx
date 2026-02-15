@@ -3,7 +3,8 @@ import { formatFullKRW, formatKRW, formatPercent, formatUSD } from '../../utils/
 import { CATEGORY_COLORS, ECONOMIC_CALENDAR } from '../../data/initialData';
 import EditableNumber from '../EditableNumber';
 import CountUp from '../CountUp';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, TrendingDown, TrendingUp } from 'lucide-react';
+import { BarChart, Bar, ResponsiveContainer } from 'recharts';
 
 const importanceDotColor = (level) => {
   if (level >= 4) return 'bg-[#FF4757]';
@@ -134,6 +135,11 @@ function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stoc
 
         <div className="border-t border-c-border mx-5" />
 
+        {/* #11 이번주 미니 리포트 */}
+        <WeeklyMini transactions={transactions} hideAmounts={hideAmounts} />
+
+        <div className="border-t border-c-border mx-5" />
+
         {/* 저축률 바 */}
         <div className="px-5 py-4">
           <div className="flex items-center gap-2 mb-2">
@@ -259,8 +265,62 @@ function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stoc
             </div>
           )}
           {todayEvents.length === 0 && upcomingEvents.length === 0 && <div className="text-sm text-c-text3 text-center py-6">예정된 일정이 없습니다</div>}
+          {/* #13 경제 캘린더 포트폴리오 연동 */}
+          {portfolio.length > 0 && (todayEvents.length > 0 || upcomingEvents.length > 0) && (
+            <div className="mt-2 bg-[#3182F6]/8 border border-[#3182F6]/15 rounded-xl p-3">
+              <div className="text-[11px] font-bold text-[#3182F6] mb-1">내 포트폴리오 영향</div>
+              <div className="text-xs text-c-text2">보유 종목({portfolio.map(s => s.symbol).join(', ')})에 영향을 줄 수 있는 지표입니다. CPI/FOMC 발표 전후 변동성에 주의하세요.</div>
+            </div>
+          )}
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+function WeeklyMini({ transactions, hideAmounts }) {
+  const data = useMemo(() => {
+    const now = new Date(), dow = now.getDay(), mon = new Date(now);
+    mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    const lastMon = new Date(mon); lastMon.setDate(lastMon.getDate() - 7);
+    let thisW = 0, lastW = 0;
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const ds = d.toISOString().split('T')[0];
+      const amt = transactions.filter(t => t.date === ds && !t.refunded).reduce((s, t) => s + t.amount, 0);
+      thisW += amt;
+      days.push({ d: ['월','화','수','목','금','토','일'][i], v: amt });
+      const ld = new Date(lastMon); ld.setDate(lastMon.getDate() + i);
+      const lds = ld.toISOString().split('T')[0];
+      lastW += transactions.filter(t => t.date === lds && !t.refunded).reduce((s, t) => s + t.amount, 0);
+    }
+    const diff = lastW > 0 ? ((thisW - lastW) / lastW * 100) : 0;
+    return { days, thisW, lastW, diff };
+  }, [transactions]);
+
+  return (
+    <div className="px-5 py-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-bold text-c-text">이번주 지출</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-bold text-c-text">{hideAmounts ? '•••••' : formatKRW(data.thisW)}</span>
+          {data.lastW > 0 && (
+            <span className={`flex items-center gap-0.5 text-[11px] font-bold ${data.diff <= 0 ? 'text-[#00C48C]' : 'text-[#FF4757]'}`}>
+              {data.diff <= 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
+              {hideAmounts ? '•••' : `${data.diff > 0 ? '+' : ''}${data.diff.toFixed(0)}%`}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="h-12">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data.days}><Bar dataKey="v" fill="#3182F6" radius={[4,4,0,0]} /></BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex justify-between text-[9px] text-c-text3 mt-0.5">
+        {data.days.map(d => <span key={d.d}>{d.d}</span>)}
       </div>
     </div>
   );

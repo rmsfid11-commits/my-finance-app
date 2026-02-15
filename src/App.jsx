@@ -3,6 +3,8 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { useSwipe } from './hooks/useSwipe';
 import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFAULT_DIVIDENDS, DEFAULT_FIXED_EXPENSES, DEFAULT_TRANSACTIONS, DEFAULT_QUICK_INPUTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS } from './data/initialData';
 import Banner from './components/Banner';
+import Onboarding from './components/Onboarding';
+import Toast from './components/Toast';
 import HomeTab from './components/tabs/HomeTab';
 import InvestTab from './components/tabs/InvestTab';
 import HouseholdTab from './components/tabs/HouseholdTab';
@@ -11,6 +13,7 @@ import StatsTab from './components/tabs/StatsTab';
 import SettingsTab from './components/tabs/SettingsTab';
 import { Home, TrendingUp, Wallet, Award, BarChart3, Settings } from 'lucide-react';
 import { fetchAllMarketData, fetchStockPrice } from './utils/api';
+import { formatDate, formatTime, generateId } from './utils/formatters';
 
 const TABS = [
   { id: 'home', label: '홈', Icon: Home },
@@ -41,6 +44,9 @@ function App() {
   const [marketData, setMarketData] = useState({});
   const [stockPrices, setStockPrices] = useState({});
   const [exchangeRate, setExchangeRate] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [lastBackup, setLastBackup] = useLocalStorage('finance_last_backup', null);
 
   useEffect(() => {
     const load = async () => { const data = await fetchAllMarketData(); setMarketData(data); if (data.exchange) setExchangeRate(data.exchange.rate); };
@@ -52,10 +58,41 @@ function App() {
     load(); const interval = setInterval(load, 30000); return () => clearInterval(interval);
   }, [portfolio]);
 
-  useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+  useEffect(() => {
+    if (theme === 'auto') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => document.documentElement.setAttribute('data-theme', mq.matches ? 'black' : 'notion');
+      apply(); mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
-  const addTransaction = useCallback((tx) => setTransactions(prev => [tx, ...prev]), [setTransactions]);
-  const deleteTransaction = useCallback((id) => setTransactions(prev => prev.filter(t => t.id !== id)), [setTransactions]);
+  // #1 온보딩
+  useEffect(() => { if (!profile.name) setShowOnboarding(true); }, []);
+
+  // #5 고정지출 자동 거래 생성
+  useEffect(() => {
+    setTransactions(prev => {
+      const today = new Date(), day = today.getDate(), month = today.toISOString().substring(0, 7);
+      const add = [];
+      fixedExpenses.forEach(fe => {
+        if (fe.day === day && !prev.some(t => t.date.startsWith(month) && t.amount === fe.amount && t.memo === `[자동] ${fe.name}`))
+          add.push({ id: generateId(), date: formatDate(today), time: formatTime(today), amount: fe.amount, category: fe.category, place: fe.name, memo: `[자동] ${fe.name}`, payment: '자동이체', auto: true });
+      });
+      return add.length > 0 ? [...add, ...prev] : prev;
+    });
+  }, []);
+
+  // #14 백업 리마인더
+  useEffect(() => {
+    if (lastBackup) { const diff = (Date.now() - new Date(lastBackup).getTime()) / 86400000; if (diff >= 30) setToast({ message: '30일 이상 백업하지 않았어요', action: '설정에서 백업', type: 'warn' }); }
+  }, []);
+
+  // #15 중복 감지 + #7 삭제 Undo
+  const txRef = useRef(transactions); txRef.current = transactions;
+  const addTransaction = useCallback((tx) => { if (!tx.auto) { const dup = txRef.current.find(t => t.date === tx.date && t.amount === tx.amount && t.category === tx.category); if (dup && !confirm(`같은 날 같은 금액(${tx.amount?.toLocaleString()}원) ${tx.category} 거래가 있어요. 추가?`)) return; } setTransactions(prev => [tx, ...prev]); }, [setTransactions]);
+  const deleteTransaction = useCallback((id) => { const del = txRef.current.find(t => t.id === id); setTransactions(prev => prev.filter(t => t.id !== id)); if (del) setToast({ message: '삭제됨', undo: () => setTransactions(prev => [del, ...prev]) }); }, [setTransactions]);
   const updateTransaction = useCallback((id, updates) => setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)), [setTransactions]);
 
   const mainRef = useRef(null);
@@ -78,7 +115,6 @@ function App() {
 
   // Glass touch glow effect
   useEffect(() => {
-    let timeout;
     const onStart = (e) => {
       const glass = e.target.closest('.glass');
       if (!glass) return;
@@ -116,14 +152,15 @@ function App() {
       document.removeEventListener('mousedown', onStart);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onEnd);
-      clearTimeout(timeout);
     };
   }, []);
 
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods };
+  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
+      {showOnboarding && <Onboarding profile={profile} setProfile={setProfile} onComplete={() => setShowOnboarding(false)} />}
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
       <Banner marketData={marketData} exchangeRate={exchangeRate} />
       <main ref={mainRef} className="flex-1 flex flex-col">
         {activeTab === 'home' && <HomeTab {...props} />}

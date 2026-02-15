@@ -3,7 +3,7 @@ import { formatFullKRW } from '../../utils/formatters';
 import { CATEGORIES } from '../../data/initialData';
 import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles } from 'lucide-react';
 
-function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts }) {
+function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup }) {
   const [activeSection, setActiveSection] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -12,6 +12,7 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
     a.download = `finance-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url);
+    if (setLastBackup) setLastBackup(new Date().toISOString());
   };
 
   const handleRestore = (e) => {
@@ -46,6 +47,7 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
           <h2 className="text-sm font-bold text-c-text mb-4">테마</h2>
           <div className="grid grid-cols-3 gap-2.5">
             {[
+              { id: 'auto', label: 'Auto', Icon: Sun, bg: 'linear-gradient(135deg,#0D1117 50%,#F7F6F3 50%)', fg: '#3182F6' },
               { id: 'black', label: 'Black', Icon: Moon, bg: '#0D1117', fg: '#fff' },
               { id: 'notion', label: 'Notion', Icon: Sun, bg: '#F7F6F3', fg: '#37352F' },
               { id: 'ocean', label: 'Ocean', Icon: Waves, bg: '#0B1929', fg: '#CCD6F6' },
@@ -53,7 +55,7 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
               { id: 'rose', label: 'Rose', Icon: Heart, bg: '#FFF5F5', fg: '#1A202C' },
               { id: 'midnight', label: 'Midnight', Icon: Sparkles, bg: '#13111C', fg: '#E0DEF4' },
             ].map(t => (
-              <button key={t.id} onClick={() => setTheme(t.id)} className={`flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl text-sm font-semibold transition-all ${theme === t.id ? 'border-2 border-[#3182F6] shadow-lg shadow-blue-500/20' : 'glass-inner'}`} style={theme === t.id ? { backgroundColor: t.bg, color: t.fg } : {}}>
+              <button key={t.id} onClick={() => setTheme(t.id)} className={`flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl text-sm font-semibold transition-all ${theme === t.id ? 'border-2 border-[#3182F6] shadow-lg shadow-blue-500/20' : 'glass-inner'}`} style={theme === t.id ? { background: t.bg, color: t.fg } : {}}>
                 <t.Icon size={18} /> {t.label}
               </button>
             ))}

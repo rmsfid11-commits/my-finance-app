@@ -1,24 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { BADGE_DEFINITIONS, LEVEL_THRESHOLDS, BADGE_REWARDS } from '../../data/initialData';
-import { Lock, ChevronDown, ChevronUp, Gift } from 'lucide-react';
+import { Lock, ChevronDown, ChevronUp, Gift, X } from 'lucide-react';
 
-function BadgeTab({ badges, setBadges, transactions, portfolio, dividends }) {
+function BadgeTab({ badges, setBadges, transactions, portfolio, dividends, setToast }) {
   const [expandedCat, setExpandedCat] = useState(null);
+  const [celebration, setCelebration] = useState(null);
+  const prevCount = useRef(Object.keys(badges).length);
 
   const earned = useMemo(() => {
     const e = { ...badges };
-    if (!e['app_join']) e['app_join'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
-    if (transactions.length > 0 && !e['first_input']) e['first_input'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
-    if (portfolio.length > 0 && !e['invest_start']) e['invest_start'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
-    if (dividends.length > 0 && !e['dividend_start']) e['dividend_start'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
-    if (transactions.some(t => t.category === '강아지') && !e['pet_lover']) e['pet_lover'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
-    if (transactions.some(t => t.category === '식비') && !e['food_start']) e['food_start'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
+    const today = new Date().toISOString().split('T')[0];
+    if (!e['app_join']) e['app_join'] = { earned: true, earnedDate: today };
+    if (transactions.length > 0 && !e['first_input']) e['first_input'] = { earned: true, earnedDate: today };
+    if (portfolio.length > 0 && !e['invest_start']) e['invest_start'] = { earned: true, earnedDate: today };
+    if (dividends.length > 0 && !e['dividend_start']) e['dividend_start'] = { earned: true, earnedDate: today };
+    if (transactions.some(t => t.category === '강아지') && !e['pet_lover']) e['pet_lover'] = { earned: true, earnedDate: today };
+    if (transactions.some(t => t.category === '식비') && !e['food_start']) e['food_start'] = { earned: true, earnedDate: today };
     const days = new Set(transactions.map(t => t.date)).size;
-    if (days >= 7 && !e['record_7']) e['record_7'] = { earned: true, earnedDate: new Date().toISOString().split('T')[0] };
+    if (days >= 7 && !e['record_7']) e['record_7'] = { earned: true, earnedDate: today };
     return e;
   }, [badges, transactions, portfolio, dividends]);
 
-  useMemo(() => { if (Object.keys(earned).length > Object.keys(badges).length) setBadges(earned); }, [earned]);
+  useEffect(() => {
+    const newCount = Object.keys(earned).length;
+    if (newCount > prevCount.current) {
+      const newBadgeIds = Object.keys(earned).filter(k => !badges[k]);
+      const newBadge = BADGE_DEFINITIONS.find(b => newBadgeIds.includes(b.id));
+      if (newBadge) setCelebration(newBadge);
+      setBadges(earned);
+    }
+    prevCount.current = newCount;
+  }, [earned]);
 
   const earnedCount = Object.values(earned).filter(b => b.earned).length;
   const currentLevel = LEVEL_THRESHOLDS.find(l => earnedCount >= l.min && earnedCount <= l.max) || LEVEL_THRESHOLDS[0];
@@ -35,6 +47,22 @@ function BadgeTab({ badges, setBadges, transactions, portfolio, dividends }) {
 
   return (
     <div className="flex-1 flex flex-col animate-slide">
+      {/* 축하 팝업 */}
+      {celebration && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 animate-fade" onClick={() => setCelebration(null)}>
+          <div className="confetti-bg absolute inset-0 pointer-events-none" />
+          <div className="relative glass rounded-3xl p-8 mx-6 max-w-sm text-center animate-pop" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setCelebration(null)} className="absolute top-3 right-3 text-c-text3"><X size={18} /></button>
+            <div className="w-20 h-20 rounded-full bg-[#FF9F43]/20 flex items-center justify-center mx-auto mb-4 animate-bounce-badge">
+              <span className="text-3xl font-bold text-[#FF9F43]">{celebration.name[0]}</span>
+            </div>
+            <div className="text-lg font-bold text-c-text mb-1">배지 획득!</div>
+            <div className="text-xl font-black text-[#FF9F43] mb-2">{celebration.name}</div>
+            <div className="text-sm text-c-text2 mb-5">{celebration.desc}</div>
+            <button onClick={() => setCelebration(null)} className="btn-primary w-full">확인</button>
+          </div>
+        </div>
+      )}
       <div className="glass flex-1 flex flex-col">
 
         {/* 배지 현황 */}

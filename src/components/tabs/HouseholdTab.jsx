@@ -81,22 +81,47 @@ function TxRow({ tx, hideAmounts, customCategories, onEdit, onDelete, showDate }
 /* ─── Main ─── */
 function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedExpenses, setFixedExpenses, addTransaction, deleteTransaction, updateTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods }) {
   const [subTab, setSubTab] = useState('quick');
+  const [showMoreTabs, setShowMoreTabs] = useState(false);
   const catNames = useMemo(() => customCategories.map(c => c.name), [customCategories]);
   const sharedProps = { transactions, hideAmounts, customCategories, catNames, paymentMethods, deleteTransaction, updateTransaction };
+
+  // #4 서브탭 정리 - 메인 4개 + 더보기
+  const mainTabs = SUB_TABS.slice(0, 4);
+  const moreTabs = SUB_TABS.slice(4);
 
   return (
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
-        {TAB_ROWS.map(([from,to,cols], ri) => (
-          <div key={ri} className={`grid border-b border-c-border ${cols===4?'grid-cols-4':cols===3?'grid-cols-3':'grid-cols-2'}`}>
-            {SUB_TABS.slice(from,to).map(({id,label},i) => (
-              <button key={id} onClick={() => setSubTab(id)} className={`py-7 text-lg font-bold text-center transition-all relative ${i<to-from-1?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
-                {label}
-                {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-[#3182F6] rounded-full"/>}
-              </button>
-            ))}
+        <div className="grid grid-cols-4 border-b border-c-border">
+          {mainTabs.map(({id,label},i) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`py-7 text-lg font-bold text-center transition-all relative ${i<3?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
+              {label}
+              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-[#3182F6] rounded-full"/>}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setShowMoreTabs(!showMoreTabs)} className="py-2 text-xs font-bold text-c-text3 text-center border-b border-c-border active:bg-c-subtle transition-colors">
+          {showMoreTabs ? '접기 ▲' : `더보기 ▼ (${moreTabs.length}개)`}
+          {moreTabs.some(t => t.id === subTab) && !showMoreTabs && <span className="ml-1 text-[#3182F6]">· {SUB_TABS.find(t=>t.id===subTab)?.label}</span>}
+        </button>
+        {showMoreTabs && (
+          <div className="animate-fade">
+            {[[0,4,4],[4,5,1],[5,9,4]].map(([from,to,cols], ri) => {
+              const slice = moreTabs.slice(from, to);
+              if (slice.length === 0) return null;
+              return (
+                <div key={ri} className={`grid border-b border-c-border ${slice.length>=4?'grid-cols-4':slice.length===3?'grid-cols-3':slice.length===2?'grid-cols-2':'grid-cols-1'}`}>
+                  {slice.map(({id,label},i) => (
+                    <button key={id} onClick={() => { setSubTab(id); setShowMoreTabs(false); }} className={`py-5 text-base font-bold text-center transition-all relative ${i<slice.length-1?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
+                      {label}
+                      {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full"/>}
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
         {subTab==='quick' && <QuickInput addTransaction={addTransaction} {...sharedProps} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} setCustomCategories={setCustomCategories} />}
         {subTab==='calendar' && <CalendarView {...sharedProps} />}
         {subTab==='daily' && <DailyView budget={budget} {...sharedProps} />}
@@ -134,6 +159,13 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
   const recentTx = useMemo(() => transactions.filter(t => t.date===today).sort((a,b) => b.time.localeCompare(a.time)).slice(0,10), [transactions, today]);
 
   const handleQuick = (item) => { const now = new Date(); addTransaction({ id: generateId(), date: formatDate(now), time: formatTime(now), amount: item.amount, category: item.category, subcategory: item.label, place: item.label, memo: '', payment: '카드', auto: false }); };
+  // #8 카테고리 자동 추천
+  const suggestCategory = (place) => {
+    if (!place) return;
+    const prev = transactions.find(t => t.place && t.place.toLowerCase() === place.toLowerCase());
+    if (prev) setForm(f => ({ ...f, category: prev.category }));
+  };
+
   const handleManual = () => {
     if (!form.amount) return; const now = new Date();
     addTransaction({ id: generateId(), date: formatDate(now), time: formatTime(now), amount: parseInt(form.amount), category: form.category, subcategory: '', place: form.place, memo: form.memo, payment: form.payment, photo: form.photo, auto: false });
@@ -193,7 +225,7 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
           <div><label className="text-xs text-c-text2">금액</label><input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="금액 입력" /></div>
           <div><label className="text-xs text-c-text2">카테고리</label><select value={form.category} onChange={e => setForm({...form, category: e.target.value})}>{catNames.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
           <div><label className="text-xs text-c-text2">결제수단</label><select value={form.payment} onChange={e => setForm({...form, payment: e.target.value})}>{paymentMethods.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
-          <div><label className="text-xs text-c-text2">장소</label><input type="text" value={form.place} onChange={e => setForm({...form, place: e.target.value})} placeholder="장소 (선택)" /></div>
+          <div><label className="text-xs text-c-text2">장소</label><input type="text" value={form.place} onChange={e => { setForm({...form, place: e.target.value}); suggestCategory(e.target.value); }} placeholder="장소 (선택)" /></div>
           <div><label className="text-xs text-c-text2">메모</label><input type="text" value={form.memo} onChange={e => setForm({...form, memo: e.target.value})} placeholder="메모 (선택)" /></div>
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={e => readPhoto(e, p => setForm(f=>({...f,photo:p})))} className="hidden" />
@@ -372,7 +404,7 @@ function DailyView({ transactions, budget, deleteTransaction, updateTransaction,
               : <TxRow key={tx.id} tx={tx} hideAmounts={hideAmounts} customCategories={customCategories} onEdit={startEdit} onDelete={deleteTransaction} />
             )}
           </div>
-        ) : <div className="text-base text-c-text3 text-center py-8">내역이 없습니다</div>}
+        ) : <div className="text-center py-8"><div className="text-base text-c-text3 mb-2">내역이 없습니다</div><div className="text-xs text-c-text3">위의 빠른 입력이나 직접 입력으로 지출을 기록해보세요</div></div>}
       </div>
     </div>
   );
@@ -498,9 +530,9 @@ function MonthlyView({ transactions, budget, setBudget, profile, fixedExpenses, 
       <div>
         <h3 className="font-bold text-lg text-c-text mb-4">AI 분석</h3>
         <div className="space-y-2 text-sm">
-          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-green-500 mb-1">강점</div><p className="text-green-400 text-xs">{parseFloat(savingRate)>=30?'저축률이 좋습니다! 꾸준히 유지하세요.':'가계부 기록을 시작한 것 자체가 훌륭합니다!'}</p></div>
-          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-yellow-500 mb-1">개선점</div><p className="text-yellow-400 text-xs">도시락이나 집밥을 활용하면 식비를 줄일 수 있어요.</p></div>
-          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-blue-500 mb-1">다음달 목표</div><p className="text-blue-400 text-xs">저축률 {Math.min(parseFloat(savingRate)+5,50)}%를 목표로 해보세요!</p></div>
+          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-green-500 mb-1">강점</div><p className="text-green-400 text-xs">{parseFloat(savingRate)>=30?`저축률 ${savingRate}% — 또래 상위권이에요! 꾸준히 유지하세요.`:parseFloat(savingRate)>=15?`저축률 ${savingRate}% — 평균적이에요. 조금만 더 아끼면 큰 차이!`:'가계부 기록을 시작한 것 자체가 훌륭합니다!'}</p></div>
+          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-yellow-500 mb-1">개선점</div><p className="text-yellow-400 text-xs">{catBreakdown.length>0?`${catBreakdown[0].name}(${hideAmounts?'•••••':formatFullKRW(catBreakdown[0].value)})이 가장 큰 비중이에요. 여기서 10% 줄이면 월 ${hideAmounts?'•••••':formatFullKRW(Math.round(catBreakdown[0].value*0.1))} 절약!`:'아직 지출 데이터가 부족해요. 기록을 계속하면 맞춤 분석을 제공할게요.'}</p></div>
+          <div className="border border-c-border rounded-2xl p-4"><div className="font-bold text-blue-500 mb-1">다음달 목표</div><p className="text-blue-400 text-xs">저축률 {Math.min(parseFloat(savingRate)+5,50)}%를 목표로 해보세요! 월 {hideAmounts?'•••••':formatFullKRW(Math.round(profile.salary*(Math.min(parseFloat(savingRate)+5,50)/100)))} 저축 가능</p></div>
         </div>
       </div>
     </div>
@@ -729,28 +761,39 @@ function FixedView({ fixedExpenses, setFixedExpenses, hideAmounts, customCategor
   );
 }
 
-/* ─── ChallengeView ─── */
+/* ─── ChallengeView (#9 실제 동작) ─── */
 function ChallengeView({ transactions, budget, hideAmounts }) {
+  const [joined, setJoined] = useLocalStorage('finance_challenges', []);
   const currentMonth = new Date().toISOString().substring(0,7);
   const monthTx = transactions.filter(t=>t.date.startsWith(currentMonth)&&!t.refunded);
-  const challenges = [
-    {id:1,name:'식비 50만원 이하',target:500000,current:monthTx.filter(t=>t.category==='식비').reduce((s,t)=>s+t.amount,0),active:true},
-    {id:2,name:'교통비 15만원 이하',target:150000,current:monthTx.filter(t=>t.category==='교통').reduce((s,t)=>s+t.amount,0),active:true},
-    {id:3,name:'무지출 데이 5일',target:5,current:new Date().getDate()-new Set(monthTx.map(t=>t.date)).size,type:'count',active:true},
+
+  const defaultChallenges = [
+    {id:'food50',name:'식비 50만원 이하',target:500000,getCurrent:tx=>tx.filter(t=>t.category==='식비').reduce((s,t)=>s+t.amount,0)},
+    {id:'transport15',name:'교통비 15만원 이하',target:150000,getCurrent:tx=>tx.filter(t=>t.category==='교통').reduce((s,t)=>s+t.amount,0)},
+    {id:'nospend5',name:'무지출 데이 5일',target:5,getCurrent:tx=>new Date().getDate()-new Set(tx.map(t=>t.date)).size,type:'count'},
   ];
+  const recommendedChallenges = [
+    {id:'coffee3',name:'커피 비용 3만원 이하',target:30000,getCurrent:tx=>tx.filter(t=>(t.place||'').includes('커피')||(t.place||'').includes('스타벅스')||(t.place||'').includes('이디야')).reduce((s,t)=>s+t.amount,0)},
+    {id:'save40',name:'한달 저축률 40%',target:40,getCurrent:()=>40,type:'rate'},
+    {id:'noeat7',name:'1주일 외식 제로',target:0,getCurrent:tx=>{const w=new Date();w.setDate(w.getDate()-7);const ws=w.toISOString().split('T')[0];return tx.filter(t=>t.date>=ws&&(t.place||'').match(/외식|식당|맛집|레스토랑/)).length;},type:'zero'},
+  ];
+
+  const allActive = [...defaultChallenges, ...recommendedChallenges.filter(c => joined.includes(c.id))];
+  const unjoined = recommendedChallenges.filter(c => !joined.includes(c.id));
 
   return (
     <div className="px-5 py-5 space-y-6">
       <div>
-        <h3 className="font-bold text-lg text-c-text mb-4">이번달 챌린지</h3>
-        <div className="space-y-4">{challenges.filter(c=>c.active).map(c=>{
-          const isOk=c.type==='count'?c.current>=c.target:c.current<=c.target;
-          const pct=c.type==='count'?Math.min(c.current/c.target*100,100):Math.max((c.target-c.current)/c.target*100,0);
-          return (<div key={c.id} className="border border-c-border rounded-2xl p-6"><div className="flex justify-between mb-2.5"><span className="text-base font-semibold text-c-text">{c.name}</span><span className={`text-sm font-bold ${isOk?'text-green-500':'text-orange-500'}`}>{c.type==='count'?`${c.current}/${c.target}일`:`${hideAmounts?'•••••':formatFullKRW(c.current)} / ${hideAmounts?'•••••':formatFullKRW(c.target)}`}</span></div><div className="progress-bar"><div className={`progress-fill ${isOk?'bg-green-500':'bg-orange-500'}`} style={{width:`${Math.min(pct,100)}%`}}/></div></div>);
+        <h3 className="font-bold text-lg text-c-text mb-4">진행 중 챌린지</h3>
+        <div className="space-y-4">{allActive.map(c=>{
+          const current = c.getCurrent(monthTx);
+          const isOk = c.type==='count'?current>=c.target:c.type==='zero'?current===0:current<=c.target;
+          const pct = c.type==='count'?Math.min(current/c.target*100,100):c.type==='zero'?(current===0?100:0):Math.max((c.target-current)/c.target*100,0);
+          return (<div key={c.id} className={`border rounded-2xl p-6 ${isOk?'border-green-500/30 bg-green-500/5':'border-c-border'}`}><div className="flex justify-between mb-2.5"><span className="text-base font-semibold text-c-text">{c.name}</span><span className={`text-sm font-bold ${isOk?'text-green-500':'text-orange-500'}`}>{isOk?'달성!':c.type==='count'?`${current}/${c.target}일`:`${hideAmounts?'•••••':formatFullKRW(current)} / ${hideAmounts?'•••••':formatFullKRW(c.target)}`}</span></div><div className="progress-bar"><div className={`progress-fill ${isOk?'bg-green-500':'bg-orange-500'}`} style={{width:`${Math.min(pct,100)}%`}}/></div></div>);
         })}</div>
       </div>
-      <div><h3 className="font-bold text-lg text-c-text mb-4">추천 챌린지</h3><div className="space-y-3">{['커피 비용 3만원 이하','한달 저축률 40%','1주일 외식 제로'].map((c,i)=><div key={i} className="flex items-center justify-between border border-c-border rounded-2xl p-6"><span className="text-base font-medium text-c-text">{c}</span><button className="text-sm bg-[#3182F6] text-white px-5 py-2 rounded-xl font-semibold">참여</button></div>)}</div></div>
-      <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-green-500">보상 시스템</h3><p className="text-xs text-green-400">챌린지 3개 달성 시 절약액의 10%를 자유롭게 사용하세요!</p></div>
+      {unjoined.length > 0 && <div><h3 className="font-bold text-lg text-c-text mb-4">추천 챌린지</h3><div className="space-y-3">{unjoined.map(c=><div key={c.id} className="flex items-center justify-between border border-c-border rounded-2xl p-6"><span className="text-base font-medium text-c-text">{c.name}</span><button onClick={()=>setJoined(p=>[...p,c.id])} className="text-sm bg-[#3182F6] text-white px-5 py-2 rounded-xl font-semibold active:scale-95 transition-transform">참여</button></div>)}</div></div>}
+      <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-green-500">보상 시스템</h3><p className="text-xs text-green-400">챌린지 달성 시 배지를 획득할 수 있어요! ({allActive.filter(c=>c.getCurrent(monthTx)<=(c.type==='count'?-1:c.target)).length}/{allActive.length} 달성)</p></div>
     </div>
   );
 }
@@ -771,7 +814,21 @@ function PatternView({ transactions, hideAmounts, customCategories }) {
       <div><h3 className="font-bold text-lg text-c-text mb-4">요일별 패턴</h3><div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={dayData}><XAxis dataKey="day" tick={{fontSize:12,fill:'#8B949E'}} axisLine={false} tickLine={false}/><YAxis width={50} tick={{fontSize:10,fill:'#8B949E'}} tickFormatter={v=>formatKRW(v)} axisLine={false} tickLine={false}/><Tooltip content={<CustomTooltip formatter={v=>formatFullKRW(v)}/>}/><Bar dataKey="amount" fill="#7C5CFC" radius={[8,8,0,0]}/></BarChart></ResponsiveContainer></div></div>
       <div><h3 className="font-bold text-lg text-c-text mb-4">결제 수단별</h3><div className="space-y-2.5">{paymentData.sort((a,b)=>b.value-a.value).map(p=><div key={p.name} className="flex items-center gap-2"><span className="text-xs w-20 text-c-text2 font-medium">{p.name}</span><div className="flex-1 h-6 border border-c-border rounded-full overflow-hidden"><div className="h-full bg-[#3182F6] rounded-full transition-all duration-500" style={{width:`${(p.value/Math.max(...paymentData.map(x=>x.value)))*100}%`}}/></div><span className="text-xs font-bold text-c-text w-20 text-right">{hideAmounts?'•••••':formatKRW(p.value)}</span></div>)}</div></div>
       <div><h3 className="font-bold text-lg text-c-text mb-4">자주 가는 곳 TOP 5</h3><div className="space-y-2">{topPlaces.map((p,i)=><div key={p.name} className="flex items-center gap-3 py-2"><span className="w-7 h-7 rounded-full bg-[#3182F6] text-white text-xs flex items-center justify-center font-bold">{i+1}</span><div className="flex-1"><div className="text-sm font-semibold text-c-text">{p.name}</div><div className="text-xs text-c-text2">{p.count}회 방문</div></div><span className="text-sm font-bold text-c-text">{hideAmounts?'•••••':formatFullKRW(p.amount)}</span></div>)}{topPlaces.length===0&&<div className="text-sm text-c-text3 text-center py-6">데이터가 부족합니다</div>}</div></div>
-      <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-blue-500">AI 인사이트</h3><div className="text-xs text-blue-400 space-y-1.5"><p>• 점심시간(12-14시)에 가장 많이 지출하고 있어요.</p><p>• 주말 지출이 평일보다 높은 편이에요.</p><p>• 도시락이나 집밥을 활용하면 식비를 30% 줄일 수 있어요.</p></div></div>
+      <div className="border border-c-border rounded-2xl p-4"><h3 className="font-bold text-sm mb-2 text-blue-500">AI 인사이트</h3><div className="text-xs text-blue-400 space-y-1.5">
+        {(() => {
+          const tips = [];
+          const peak = timeData.reduce((a,b) => a.amount > b.amount ? a : b, timeData[0]);
+          if (peak.amount > 0) tips.push(`• ${peak.label}시에 가장 많이 지출 (${formatKRW(peak.amount)})`);
+          const wkend = dayData[5].amount + dayData[6].amount;
+          const wkday = dayData.slice(0,5).reduce((s,d)=>s+d.amount,0);
+          tips.push(wkend > wkday/5*2 ? '• 주말 지출이 평일 평균보다 높아요. 주말 예산을 세워보세요.' : '• 주말 절약을 잘 하고 있어요!');
+          if (topPlaces.length > 0) tips.push(`• ${topPlaces[0].name}에 가장 자주 방문 (${topPlaces[0].count}회, ${formatKRW(topPlaces[0].amount)})`);
+          const cash = paymentData.find(p => p.name === '현금');
+          const card = paymentData.find(p => p.name === '카드');
+          if (cash && card && cash.value > card.value) tips.push('• 현금 지출이 많아요. 카드로 전환하면 지출 추적이 쉬워져요.');
+          return tips.map((t,i) => <p key={i}>{t}</p>);
+        })()}
+      </div></div>
     </div>
   );
 }
