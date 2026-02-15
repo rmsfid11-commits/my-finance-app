@@ -91,11 +91,10 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
         {/* 메인 4탭 */}
-        <div className="grid grid-cols-4 border-b border-c-border">
-          {mainTabs.map(({id,label},i) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-sm font-bold text-center transition-all relative ${i<3?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
+        <div className="grid grid-cols-4 gap-1.5 px-4 pt-4 pb-3">
+          {mainTabs.map(({id,label}) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-base font-bold rounded-xl transition-all ${subTab===id?'bg-[#3182F6] text-white shadow-md shadow-blue-500/25':'text-c-text2 active:bg-c-subtle'}`}>
               {label}
-              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full"/>}
             </button>
           ))}
         </div>
