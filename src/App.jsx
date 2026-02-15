@@ -9,7 +9,9 @@ import { DEFAULT_PROFILE, DEFAULT_GOALS, DEFAULT_BUDGET, DEFAULT_PORTFOLIO, DEFA
 import Banner from './components/Banner';
 import Onboarding from './components/Onboarding';
 import AuthScreen from './components/AuthScreen';
+import ErrorBoundary from './components/ErrorBoundary';
 import Toast from './components/Toast';
+import { useNotifications } from './hooks/useNotifications';
 import HomeTab from './components/tabs/HomeTab';
 import InvestTab from './components/tabs/InvestTab';
 import HouseholdTab from './components/tabs/HouseholdTab';
@@ -140,6 +142,8 @@ function App() {
   useEffect(() => {
     if (lastBackup) { const diff = (Date.now() - new Date(lastBackup).getTime()) / 86400000; if (diff >= 30) setToast({ message: '30일 이상 백업하지 않았어요', action: '설정에서 백업', type: 'warn' }); }
   }, []);
+
+  useNotifications(settings.notifications?.budgetOver, { budget, transactions, fixedExpenses, profile });
 
   const txRef = useRef(transactions); txRef.current = transactions;
   const addTransaction = useCallback((tx) => { if (!tx.auto) { const dup = txRef.current.find(t => t.date === tx.date && t.amount === tx.amount && t.category === tx.category); if (dup && !confirm(`같은 날 같은 금액(${tx.amount?.toLocaleString()}원) ${tx.category} 거래가 있어요. 추가?`)) return; } setTransactions(prev => [tx, ...prev]); }, [setTransactions]);

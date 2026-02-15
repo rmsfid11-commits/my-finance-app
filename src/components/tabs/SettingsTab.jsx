@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
 import { formatFullKRW } from '../../utils/formatters';
 import { CATEGORIES } from '../../data/initialData';
-import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff } from 'lucide-react';
+import PrivacyPolicy from '../PrivacyPolicy';
+import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff, Shield, FileText } from 'lucide-react';
 
 function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup, user, handleLogout }) {
   const [activeSection, setActiveSection] = useState(null);
+  const [policyType, setPolicyType] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleBackup = () => {
@@ -143,10 +145,19 @@ function SettingsTab({ profile, setProfile, goals, setGoals, budget, setBudget, 
 
         <div className="border-t border-c-border mx-5" />
 
+        {/* 약관 */}
+        <div className="px-5 py-4 space-y-2">
+          <button onClick={() => setPolicyType('privacy')} className="w-full flex items-center gap-3 py-2.5 text-left"><Shield size={16} className="text-c-text3" /><span className="text-sm text-c-text2">개인정보처리방침</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
+          <button onClick={() => setPolicyType('terms')} className="w-full flex items-center gap-3 py-2.5 text-left"><FileText size={16} className="text-c-text3" /><span className="text-sm text-c-text2">이용약관</span><ChevronRight size={14} className="text-c-text3 ml-auto" /></button>
+        </div>
+
+        <div className="border-t border-c-border mx-5" />
+
         {/* 버전 */}
         <div className="text-center py-6"><div className="text-xs text-c-text3 font-medium">MyFinance v1.1</div><div className="text-xs text-c-text3">개인 재무관리 앱</div></div>
 
       </div>
+      {policyType && <PrivacyPolicy type={policyType} onClose={() => setPolicyType(null)} />}
     </div>
   );
 }
