@@ -83,16 +83,13 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
   const catNames = useMemo(() => customCategories.map(c => c.name), [customCategories]);
   const sharedProps = { transactions, hideAmounts, customCategories, catNames, paymentMethods, deleteTransaction, updateTransaction };
 
-  const scrollRef = useRef(null);
-
   return (
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
-        <div ref={scrollRef} className="flex overflow-x-auto scrollbar-hide border-b border-c-border">
+        <div className="flex flex-wrap gap-1.5 px-4 py-3 border-b border-c-border">
           {SUB_TABS.map(({id,label}) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`shrink-0 px-4 py-3.5 text-sm font-bold text-center transition-all relative whitespace-nowrap ${subTab===id?'text-[#3182F6]':'text-c-text3 active:bg-c-subtle'}`}>
+            <button key={id} onClick={() => setSubTab(id)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${subTab===id?'bg-[#3182F6] text-white shadow-sm shadow-blue-500/20':'glass-inner text-c-text2 active:bg-c-subtle'}`}>
               {label}
-              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full"/>}
             </button>
           ))}
         </div>
