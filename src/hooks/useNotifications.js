@@ -1,16 +1,17 @@
 import { useEffect, useRef } from 'react';
 
+const hasNotification = typeof window !== 'undefined' && 'Notification' in window;
+
 export function useNotifications(enabled, { budget, transactions, fixedExpenses, profile }) {
   const sent = useRef(new Set());
 
   useEffect(() => {
-    if (!enabled || !('Notification' in window)) return;
+    if (!enabled || !hasNotification) return;
     if (Notification.permission === 'default') Notification.requestPermission();
   }, [enabled]);
 
-  // Budget alert
   useEffect(() => {
-    if (!enabled || Notification.permission !== 'granted') return;
+    if (!enabled || !hasNotification || Notification.permission !== 'granted') return;
     const month = new Date().toISOString().substring(0, 7);
     const monthTx = transactions.filter(t => t.date.startsWith(month) && !t.refunded);
     const byCategory = {};
@@ -27,10 +28,8 @@ export function useNotifications(enabled, { budget, transactions, fixedExpenses,
     });
   }, [enabled, transactions, budget]);
 
-  // Fixed expense reminder (daily check)
   useEffect(() => {
-    if (!enabled || Notification.permission !== 'granted') return;
-    const today = new Date().getDate();
+    if (!enabled || !hasNotification || Notification.permission !== 'granted') return;
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     const tmrDay = tomorrow.getDate();
 
