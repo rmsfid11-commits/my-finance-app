@@ -107,7 +107,7 @@ function App() {
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    const ro = new ResizeObserver(([entry]) => setNavHeight(entry.contentRect.height));
+    const ro = new ResizeObserver(([entry]) => setNavHeight(entry.target.offsetHeight));
     ro.observe(nav);
     setNavHeight(nav.offsetHeight);
     return () => ro.disconnect();
