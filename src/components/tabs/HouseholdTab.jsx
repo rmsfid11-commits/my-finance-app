@@ -26,14 +26,22 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
   return (
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
-        <div className="p-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {SUB_TABS.map(({ id, label }) => (
-              <button key={id} onClick={() => setSubTab(id)} className={`px-5 py-3 text-sm font-semibold rounded-xl whitespace-nowrap transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 border-b border-c-border">
+          {SUB_TABS.slice(0, 4).map(({ id, label }, i) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`py-4 text-sm font-semibold text-center transition-all relative ${i < 3 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
+              {label}
+              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full" />}
+            </button>
+          ))}
         </div>
-        <div className="border-t border-c-border mx-5" />
+        <div className="grid grid-cols-3 border-b border-c-border">
+          {SUB_TABS.slice(4).map(({ id, label }, i) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`py-4 text-sm font-semibold text-center transition-all relative ${i < 2 ? 'border-r border-c-border' : ''} ${subTab === id ? 'text-[#3182F6] bg-[#3182F6]/5' : 'text-c-text3 active:bg-c-subtle'}`}>
+              {label}
+              {subTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full" />}
+            </button>
+          ))}
+        </div>
         {subTab === 'quick' && <QuickInput addTransaction={addTransaction} hideAmounts={hideAmounts} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} customCategories={customCategories} setCustomCategories={setCustomCategories} paymentMethods={paymentMethods} catNames={catNames} />}
         {subTab === 'daily' && <DailyView transactions={transactions} budget={budget} deleteTransaction={deleteTransaction} updateTransaction={updateTransaction} hideAmounts={hideAmounts} customCategories={customCategories} paymentMethods={paymentMethods} catNames={catNames} />}
         {subTab === 'weekly' && <WeeklyView transactions={transactions} budget={budget} hideAmounts={hideAmounts} />}
