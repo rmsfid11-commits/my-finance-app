@@ -1,4 +1,4 @@
-const CACHE_NAME = 'myfinance-v2';
+const CACHE_NAME = 'myfinance-v3';
 const urlsToCache = ['./', './index.html', './manifest.json', './favicon.svg'];
 
 self.addEventListener('install', e => {
@@ -12,6 +12,18 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // HTML: network-first (always get latest)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+  // Other assets: cache-first
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request).then(res => {
       if (res.status === 200 && res.type === 'basic') {
