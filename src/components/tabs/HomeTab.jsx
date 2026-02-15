@@ -1,19 +1,48 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { formatFullKRW, formatKRW, formatPercent, formatUSD } from '../../utils/formatters';
 import { CATEGORY_COLORS, ECONOMIC_CALENDAR } from '../../data/initialData';
 import EditableNumber from '../EditableNumber';
 import CountUp from '../CountUp';
 import CustomTooltip from '../CustomTooltip';
-import { Eye, EyeOff, TrendingDown, TrendingUp, ChevronRight, Zap, AlertTriangle, Clock, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, TrendingDown, TrendingUp, ChevronRight, Zap, AlertTriangle, Clock, Sparkles, Flame, Trophy, Star, CheckCircle, Gift } from 'lucide-react';
 import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Tooltip, XAxis, YAxis } from 'recharts';
 
 const LOGO_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3','#FF6B81','#2ED573'];
 const getLogoColor = (s) => LOGO_COLORS[s.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
 const importanceDotColor = (l) => l >= 4 ? 'bg-[#FF4757]' : l >= 3 ? 'bg-[#FF9F43]' : l >= 2 ? 'bg-[#FFD93D]' : 'bg-[#30363D]';
 
-function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stockPrices, exchangeRate, transactions, dividends, fixedExpenses, hideAmounts, setHideAmounts, customCategories }) {
+// ─── 챌린지 정의 ───
+const WEEKLY_CHALLENGES = [
+  { id: 'no_spend_3', name: '무지출 3일', desc: '이번주 무지출 3일 달성', xp: 50, icon: '🚫', check: (tx, today) => { const week = getWeekDates(today); const spentDays = new Set(tx.filter(t => week.includes(t.date)).map(t => t.date)); return week.filter(d => !spentDays.has(d) && d <= today).length >= 3; } },
+  { id: 'under_10k', name: '만원의 행복', desc: '하루 지출 1만원 이하 5일', xp: 40, icon: '💪', check: (tx, today) => { const week = getWeekDates(today); const dailySum = {}; tx.filter(t => week.includes(t.date)).forEach(t => { dailySum[t.date] = (dailySum[t.date] || 0) + t.amount; }); return Object.values(dailySum).filter(v => v <= 10000).length >= 5; } },
+  { id: 'log_every_day', name: '매일 기록', desc: '7일 연속 거래 기록', xp: 60, icon: '📝', check: (tx, today) => { const week = getWeekDates(today); return week.filter(d => d <= today).every(d => tx.some(t => t.date === d)); } },
+  { id: 'coffee_save', name: '커피 절약', desc: '이번주 커피/카페 2만원 이하', xp: 30, icon: '☕', check: (tx, today) => { const week = getWeekDates(today); const coffee = tx.filter(t => week.includes(t.date) && (t.place?.includes('커피') || t.place?.includes('카페') || t.memo?.includes('커피'))); return coffee.reduce((s, t) => s + t.amount, 0) <= 20000; } },
+  { id: 'budget_hero', name: '예산 수호자', desc: '모든 카테고리 예산 내 유지', xp: 80, icon: '🛡️', check: (tx, today, budget) => { const month = today.substring(0, 7); const byC = {}; tx.filter(t => t.date.startsWith(month)).forEach(t => { byC[t.category] = (byC[t.category] || 0) + t.amount; }); return Object.entries(budget).every(([cat, b]) => !b || (byC[cat] || 0) <= b); } },
+  { id: 'saving_30', name: '저축왕', desc: '이번달 저축률 30% 이상', xp: 100, icon: '👑', check: (tx, today, budget, profile, fixedExp) => { const month = today.substring(0, 7); const spend = tx.filter(t => t.date.startsWith(month)).reduce((s, t) => s + t.amount, 0) + fixedExp.reduce((s, f) => s + f.amount, 0); return profile.salary > 0 && (profile.salary - spend) / profile.salary >= 0.3; } },
+];
+
+function getWeekDates(today) {
+  const d = new Date(today), dow = d.getDay();
+  const mon = new Date(d); mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  return Array.from({ length: 7 }, (_, i) => { const dd = new Date(mon); dd.setDate(mon.getDate() + i); return dd.toISOString().split('T')[0]; });
+}
+
+const LEVEL_XP = [0, 100, 250, 500, 800, 1200, 1800, 2500, 3500, 5000, 7000, 10000];
+const getLevelInfo = (xp) => {
+  let lvl = 1;
+  for (let i = 1; i < LEVEL_XP.length; i++) { if (xp >= LEVEL_XP[i]) lvl = i + 1; else break; }
+  const cur = LEVEL_XP[lvl - 1] || 0;
+  const next = LEVEL_XP[lvl] || LEVEL_XP[LEVEL_XP.length - 1] * 1.5;
+  return { level: lvl, currentXP: xp - cur, neededXP: next - cur, pct: ((xp - cur) / (next - cur)) * 100 };
+};
+
+const LEVEL_TITLES = ['뉴비', '절약 입문자', '알뜰 시민', '재테크 루키', '머니 세이버', '저축 전사', '투자 탐험가', '재무 마스터', '부의 설계자', '경제적 자유인', '금융 전설', '돈의 신'];
+
+function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stockPrices, exchangeRate, transactions, dividends, fixedExpenses, hideAmounts, setHideAmounts, customCategories, gamification, setGamification }) {
   const [showAllTx, setShowAllTx] = useState(false);
   const [selectedCat, setSelectedCat] = useState(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showChallenges, setShowChallenges] = useState(false);
   const mask = (t) => hideAmounts ? '•••••' : t;
   const today = new Date().toISOString().split('T')[0];
   const currentMonth = today.substring(0, 7);
@@ -109,6 +138,50 @@ function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stoc
     return tips;
   }, [savingRate, spendingPace, overBudget, todaySpending, todayObj]);
 
+  // ─── 게이미피케이션 ───
+  const gam = gamification || { xp: 0, level: 1, streak: 0, lastCheckIn: null, challenges: [], completedChallenges: [] };
+  const levelInfo = getLevelInfo(gam.xp);
+  const levelTitle = LEVEL_TITLES[Math.min(levelInfo.level - 1, LEVEL_TITLES.length - 1)];
+
+  // 출석 체크인 (하루 1회)
+  useEffect(() => {
+    if (!setGamification) return;
+    const lastDate = gam.lastCheckIn;
+    if (lastDate === today) return;
+    const yesterday = new Date(todayObj); yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const newStreak = lastDate === yesterdayStr ? gam.streak + 1 : 1;
+    const streakBonus = newStreak >= 7 ? 20 : newStreak >= 3 ? 10 : 5;
+    const prevLevel = getLevelInfo(gam.xp).level;
+    const newXP = gam.xp + streakBonus;
+    const newLevel = getLevelInfo(newXP).level;
+    setGamification(prev => ({ ...prev, lastCheckIn: today, streak: newStreak, xp: newXP }));
+    if (newLevel > prevLevel) setTimeout(() => setShowLevelUp(true), 500);
+  }, [today]);
+
+  // 챌린지 진행 체크
+  const activeChallenges = useMemo(() => {
+    const completed = new Set(gam.completedChallenges || []);
+    return WEEKLY_CHALLENGES.map(ch => ({
+      ...ch,
+      done: completed.has(ch.id),
+      progress: ch.check(transactions, today, budget, profile, fixedExpenses)
+    }));
+  }, [transactions, today, budget, profile, fixedExpenses, gam.completedChallenges]);
+
+  const claimChallenge = useCallback((ch) => {
+    if (!ch.progress || ch.done || !setGamification) return;
+    const prevLevel = getLevelInfo(gam.xp).level;
+    const newXP = gam.xp + ch.xp;
+    const newLevel = getLevelInfo(newXP).level;
+    setGamification(prev => ({
+      ...prev,
+      xp: newXP,
+      completedChallenges: [...(prev.completedChallenges || []), ch.id]
+    }));
+    if (newLevel > prevLevel) setTimeout(() => setShowLevelUp(true), 500);
+  }, [gam.xp, setGamification]);
+
   // 경제 일정
   const todayEvents = ECONOMIC_CALENDAR.filter(e => e.date === today);
   const upcomingEvents = ECONOMIC_CALENDAR.filter(e => e.date > today).slice(0, 3);
@@ -129,6 +202,79 @@ function HomeTab({ profile, setProfile, goals, setGoals, budget, portfolio, stoc
   return (
     <div className="flex-1 flex flex-col animate-slide">
       <div className="glass flex-1 flex flex-col">
+
+        {/* ━━━ 스트릭 + 레벨 ━━━ */}
+        <div className="px-5 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            {/* 스트릭 */}
+            <div className="flex items-center gap-2 glass-inner rounded-2xl px-3.5 py-2.5">
+              <Flame size={18} className={gam.streak >= 7 ? 'text-[#FF4757]' : gam.streak >= 3 ? 'text-[#FF9F43]' : 'text-c-text3'} />
+              <div>
+                <div className="text-lg font-extrabold text-c-text leading-none">{gam.streak}</div>
+                <div className="text-[9px] text-c-text3">연속 출석</div>
+              </div>
+            </div>
+            {/* 레벨 + XP */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Star size={14} className="text-[#FFD93D]" />
+                  <span className="text-xs font-bold text-c-text">Lv.{levelInfo.level}</span>
+                  <span className="text-[10px] text-c-text2">{levelTitle}</span>
+                </div>
+                <span className="text-[10px] text-c-text3">{gam.xp} XP</span>
+              </div>
+              <div className="h-2 glass-inner rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(levelInfo.pct, 100)}%`, background: 'linear-gradient(90deg, #FFD93D, #FF9F43)' }} />
+              </div>
+              <div className="text-[9px] text-c-text3 mt-0.5 text-right">{Math.round(levelInfo.currentXP)} / {Math.round(levelInfo.neededXP)} XP</div>
+            </div>
+          </div>
+
+          {/* 챌린지 미니 */}
+          <button onClick={() => setShowChallenges(!showChallenges)} className="w-full mt-2.5 flex items-center gap-2 glass-inner rounded-xl px-3.5 py-2.5 active:scale-[0.98] transition-transform">
+            <Trophy size={15} className="text-[#7C5CFC]" />
+            <span className="text-xs font-bold text-c-text flex-1 text-left">주간 챌린지</span>
+            <span className="text-[10px] font-bold text-[#00C48C]">{activeChallenges.filter(c => c.done).length}/{activeChallenges.length} 완료</span>
+            <ChevronRight size={14} className={`text-c-text3 transition-transform ${showChallenges ? 'rotate-90' : ''}`} />
+          </button>
+
+          {showChallenges && (
+            <div className="mt-2 space-y-1.5 animate-fade">
+              {activeChallenges.map(ch => (
+                <div key={ch.id} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all ${ch.done ? 'bg-[#00C48C]/8' : ch.progress ? 'bg-[#FFD93D]/8' : 'glass-inner'}`}>
+                  <span className="text-lg">{ch.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-xs font-bold text-c-text">{ch.name}</div>
+                    <div className="text-[10px] text-c-text3">{ch.desc}</div>
+                  </div>
+                  {ch.done ? (
+                    <span className="text-[10px] font-bold text-[#00C48C] flex items-center gap-0.5"><CheckCircle size={12} /> 완료</span>
+                  ) : ch.progress ? (
+                    <button onClick={() => claimChallenge(ch)} className="text-[10px] font-bold text-[#FFD93D] bg-[#FFD93D]/15 px-2.5 py-1.5 rounded-lg flex items-center gap-1 active:scale-95 transition-transform"><Gift size={11} /> +{ch.xp}XP</button>
+                  ) : (
+                    <span className="text-[10px] text-c-text3">+{ch.xp}XP</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-c-border mx-5" />
+
+        {/* 레벨업 모달 */}
+        {showLevelUp && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 animate-fade" onClick={() => setShowLevelUp(false)}>
+            <div className="text-center animate-slide" onClick={e => e.stopPropagation()}>
+              <div className="text-6xl mb-3">🎉</div>
+              <div className="text-2xl font-extrabold text-[#FFD93D] mb-1">레벨 업!</div>
+              <div className="text-lg font-bold text-white mb-0.5">Lv.{levelInfo.level}</div>
+              <div className="text-sm text-white/70 mb-4">{levelTitle}</div>
+              <button onClick={() => setShowLevelUp(false)} className="px-6 py-2.5 bg-[#FFD93D] text-black font-bold rounded-2xl text-sm active:scale-95 transition-transform">확인</button>
+            </div>
+          </div>
+        )}
 
         {/* ━━━ 총 자산 헤더 ━━━ */}
         <div className="px-5 pt-5 pb-4">

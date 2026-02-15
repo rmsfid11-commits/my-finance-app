@@ -31,7 +31,7 @@ const TABS = [
   { id: 'settings', label: '설정', Icon: Settings },
 ];
 
-const CLOUD_KEYS = ['profile','goals','budget','portfolio','dividends','fixedExpenses','transactions','badges','settings','theme','watchlist','hideAmounts','customQuickInputs','customCategories','paymentMethods','lastBackup'];
+const CLOUD_KEYS = ['profile','goals','budget','portfolio','dividends','fixedExpenses','transactions','badges','settings','theme','watchlist','hideAmounts','customQuickInputs','customCategories','paymentMethods','lastBackup','gamification'];
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -55,6 +55,7 @@ function App() {
   const [customCategories, setCustomCategories] = useLocalStorage('finance_categories', DEFAULT_CATEGORIES);
   const [paymentMethods, setPaymentMethods] = useLocalStorage('finance_payment_methods', DEFAULT_PAYMENT_METHODS);
   const [lastBackup, setLastBackup] = useLocalStorage('finance_last_backup', null);
+  const [gamification, setGamification] = useLocalStorage('finance_gamification', { xp: 0, level: 1, streak: 0, lastCheckIn: null, challenges: [], completedChallenges: [] });
   const [marketData, setMarketData] = useState({});
   const [stockPrices, setStockPrices] = useState({});
   const [exchangeRate, setExchangeRate] = useState(null);
@@ -62,8 +63,8 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Cloud data map
-  const cloudSetters = { profile: setProfile, goals: setGoals, budget: setBudget, portfolio: setPortfolio, dividends: setDividends, fixedExpenses: setFixedExpenses, transactions: setTransactions, badges: setBadges, settings: setSettings, theme: setTheme, watchlist: setWatchlist, hideAmounts: setHideAmounts, customQuickInputs: setCustomQuickInputs, customCategories: setCustomCategories, paymentMethods: setPaymentMethods, lastBackup: setLastBackup };
-  const cloudData = { profile, goals, budget, portfolio, dividends, fixedExpenses, transactions, badges, settings, theme, watchlist, hideAmounts, customQuickInputs, customCategories, paymentMethods, lastBackup };
+  const cloudSetters = { profile: setProfile, goals: setGoals, budget: setBudget, portfolio: setPortfolio, dividends: setDividends, fixedExpenses: setFixedExpenses, transactions: setTransactions, badges: setBadges, settings: setSettings, theme: setTheme, watchlist: setWatchlist, hideAmounts: setHideAmounts, customQuickInputs: setCustomQuickInputs, customCategories: setCustomCategories, paymentMethods: setPaymentMethods, lastBackup: setLastBackup, gamification: setGamification };
+  const cloudData = { profile, goals, budget, portfolio, dividends, fixedExpenses, transactions, badges, settings, theme, watchlist, hideAmounts, customQuickInputs, customCategories, paymentMethods, lastBackup, gamification };
 
   // Firestore: load on login
   useEffect(() => {
@@ -180,7 +181,7 @@ function App() {
   if (authLoading) return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}><div className="text-c-text2 text-sm">로딩중...</div></div>;
   if (firebaseEnabled && !user && !skipped) return <AuthScreen onSkip={() => setSkipped(true)} />;
 
-  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup, user, handleLogout };
+  const props = { profile, setProfile, goals, setGoals, budget, setBudget, portfolio, setPortfolio, dividends, setDividends, fixedExpenses, setFixedExpenses, transactions, setTransactions, badges, setBadges, settings, setSettings, theme, setTheme, watchlist, setWatchlist, marketData, stockPrices, exchangeRate, addTransaction, deleteTransaction, updateTransaction, hideAmounts, setHideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods, setToast, lastBackup, setLastBackup, user, handleLogout, gamification, setGamification };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ paddingBottom: navHeight }}>
