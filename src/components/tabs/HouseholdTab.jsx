@@ -13,7 +13,6 @@ const SUB_TABS = [
   { id: 'income', label: '수입' }, { id: 'fixed', label: '고정지출' }, { id: 'installment', label: '할부' },
   { id: 'challenge', label: '챌린지' }, { id: 'pattern', label: '패턴' },
 ];
-const TAB_ROWS = [[0,4,4],[4,8,4],[8,11,3],[11,13,2]];
 const getCatColor = (cats, name) => cats.find(c => c.name === name)?.color || '#8B95A1';
 const getCatIcon = (cats, name) => cats.find(c => c.name === name)?.icon || '📦';
 
@@ -81,47 +80,22 @@ function TxRow({ tx, hideAmounts, customCategories, onEdit, onDelete, showDate }
 /* ─── Main ─── */
 function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedExpenses, setFixedExpenses, addTransaction, deleteTransaction, updateTransaction, hideAmounts, customQuickInputs, setCustomQuickInputs, customCategories, setCustomCategories, paymentMethods, setPaymentMethods }) {
   const [subTab, setSubTab] = useState('quick');
-  const [showMoreTabs, setShowMoreTabs] = useState(false);
   const catNames = useMemo(() => customCategories.map(c => c.name), [customCategories]);
   const sharedProps = { transactions, hideAmounts, customCategories, catNames, paymentMethods, deleteTransaction, updateTransaction };
 
-  // #4 서브탭 정리 - 메인 4개 + 더보기
-  const mainTabs = SUB_TABS.slice(0, 4);
-  const moreTabs = SUB_TABS.slice(4);
+  const scrollRef = useRef(null);
 
   return (
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
-        <div className="grid grid-cols-4 border-b border-c-border">
-          {mainTabs.map(({id,label},i) => (
-            <button key={id} onClick={() => setSubTab(id)} className={`py-7 text-lg font-bold text-center transition-all relative ${i<3?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
+        <div ref={scrollRef} className="flex overflow-x-auto scrollbar-hide border-b border-c-border">
+          {SUB_TABS.map(({id,label}) => (
+            <button key={id} onClick={() => setSubTab(id)} className={`shrink-0 px-4 py-3.5 text-sm font-bold text-center transition-all relative whitespace-nowrap ${subTab===id?'text-[#3182F6]':'text-c-text3 active:bg-c-subtle'}`}>
               {label}
-              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-[#3182F6] rounded-full"/>}
+              {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#3182F6] rounded-full"/>}
             </button>
           ))}
         </div>
-        <button onClick={() => setShowMoreTabs(!showMoreTabs)} className="py-2 text-xs font-bold text-c-text3 text-center border-b border-c-border active:bg-c-subtle transition-colors">
-          {showMoreTabs ? '접기 ▲' : `더보기 ▼ (${moreTabs.length}개)`}
-          {moreTabs.some(t => t.id === subTab) && !showMoreTabs && <span className="ml-1 text-[#3182F6]">· {SUB_TABS.find(t=>t.id===subTab)?.label}</span>}
-        </button>
-        {showMoreTabs && (
-          <div className="animate-fade">
-            {[[0,4,4],[4,5,1],[5,9,4]].map(([from,to,cols], ri) => {
-              const slice = moreTabs.slice(from, to);
-              if (slice.length === 0) return null;
-              return (
-                <div key={ri} className={`grid border-b border-c-border ${slice.length>=4?'grid-cols-4':slice.length===3?'grid-cols-3':slice.length===2?'grid-cols-2':'grid-cols-1'}`}>
-                  {slice.map(({id,label},i) => (
-                    <button key={id} onClick={() => { setSubTab(id); setShowMoreTabs(false); }} className={`py-5 text-base font-bold text-center transition-all relative ${i<slice.length-1?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
-                      {label}
-                      {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full"/>}
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        )}
         {subTab==='quick' && <QuickInput addTransaction={addTransaction} {...sharedProps} customQuickInputs={customQuickInputs} setCustomQuickInputs={setCustomQuickInputs} setCustomCategories={setCustomCategories} />}
         {subTab==='calendar' && <CalendarView {...sharedProps} />}
         {subTab==='daily' && <DailyView budget={budget} {...sharedProps} />}
@@ -326,41 +300,53 @@ function CategoryManager({ customCategories, setCustomCategories, showCatManage,
 function CalendarView({ transactions, hideAmounts, customCategories, deleteTransaction }) {
   const [month, setMonth] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
   const [selDate, setSelDate] = useState(null);
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const cells = useMemo(() => {
     const first = new Date(month.y, month.m, 1), last = new Date(month.y, month.m+1, 0);
     const arr = Array.from({length: first.getDay()}, () => null);
     for (let d=1; d<=last.getDate(); d++) {
       const ds = `${month.y}-${String(month.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      arr.push({ day: d, date: ds, total: transactions.filter(t=>t.date===ds&&!t.refunded).reduce((s,t)=>s+t.amount,0) });
+      const dayTx = transactions.filter(t=>t.date===ds&&!t.refunded);
+      const total = dayTx.reduce((s,t)=>s+t.amount,0);
+      const cats = [...new Set(dayTx.map(t=>t.category))].slice(0,3);
+      arr.push({ day: d, date: ds, total, cats, count: dayTx.length });
     }
     return arr;
   }, [month, transactions]);
 
+  const monthTotal = useMemo(() => cells.reduce((s,c) => s + (c?.total||0), 0), [cells]);
   const selTx = useMemo(() => selDate ? transactions.filter(t=>t.date===selDate).sort((a,b)=>b.time.localeCompare(a.time)) : [], [transactions, selDate]);
 
   return (
-    <div className="px-5 py-5 space-y-4">
+    <div className="px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
-        <button onClick={()=>setMonth(p=>p.m===0?{y:p.y-1,m:11}:{...p,m:p.m-1})}><ChevronLeft size={22} className="text-c-text2"/></button>
-        <h3 className="font-bold text-lg text-c-text">{month.y}년 {month.m+1}월</h3>
-        <button onClick={()=>setMonth(p=>p.m===11?{y:p.y+1,m:0}:{...p,m:p.m+1})}><ChevronRight size={22} className="text-c-text2"/></button>
+        <button onClick={()=>setMonth(p=>p.m===0?{y:p.y-1,m:11}:{...p,m:p.m-1})} className="p-2 rounded-xl active:bg-c-subtle"><ChevronLeft size={22} className="text-c-text2"/></button>
+        <div className="text-center">
+          <h3 className="font-bold text-lg text-c-text">{month.y}년 {month.m+1}월</h3>
+          <div className="text-xs text-red-400 font-semibold">{hideAmounts ? '•••••' : formatFullKRW(monthTotal)}</div>
+        </div>
+        <button onClick={()=>setMonth(p=>p.m===11?{y:p.y+1,m:0}:{...p,m:p.m+1})} className="p-2 rounded-xl active:bg-c-subtle"><ChevronRight size={22} className="text-c-text2"/></button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {['일','월','화','수','목','금','토'].map(d=><div key={d} className="text-xs font-bold text-c-text3 py-1">{d}</div>)}
+      <div className="grid grid-cols-7 text-center">
+        {['일','월','화','수','목','금','토'].map((d,i)=><div key={d} className={`text-[11px] font-bold py-2 ${i===0?'text-red-400':i===6?'text-blue-400':'text-c-text3'}`}>{d}</div>)}
         {cells.map((c,i) => c ? (
-          <button key={i} onClick={()=>setSelDate(c.date)} className={`py-2 rounded-lg text-xs transition-all ${selDate===c.date?'bg-[#3182F6] text-white':'hover:bg-c-subtle'}`}>
-            <div className="font-semibold">{c.day}</div>
-            {c.total>0 && <div className={`text-[10px] ${selDate===c.date?'text-white/80':'text-red-400'}`}>{formatKRW(c.total)}</div>}
+          <button key={i} onClick={()=>setSelDate(selDate===c.date?null:c.date)} className={`flex flex-col items-center justify-start rounded-xl p-1 min-h-[72px] transition-all border ${selDate===c.date?'border-[#3182F6] bg-[#3182F6]/8':'border-transparent active:bg-c-subtle'} ${c.date===todayStr&&selDate!==c.date?'bg-[#3182F6]/5':''}`}>
+            <div className={`text-xs font-bold leading-tight ${c.date===todayStr?'text-[#3182F6]':i%7===0?'text-red-400':i%7===6?'text-blue-400':'text-c-text'}`}>{c.day}</div>
+            {c.total>0 && <div className="text-[9px] font-semibold text-red-400 leading-tight mt-0.5">{hideAmounts?'···':formatKRW(c.total)}</div>}
+            {c.cats.length>0 && <div className="flex gap-[2px] mt-auto pb-0.5">{c.cats.map((cat,ci)=><div key={ci} className="w-[5px] h-[5px] rounded-full" style={{backgroundColor:getCatColor(customCategories,cat)}}/>)}</div>}
           </button>
-        ) : <div key={i}/>)}
+        ) : <div key={i} className="min-h-[72px]"/>)}
       </div>
       {selDate && (
-        <div>
-          <h4 className="font-bold text-base text-c-text mb-2">{selDate} 내역</h4>
+        <div className="glass-inner rounded-2xl p-4 animate-fade">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-bold text-sm text-c-text">{selDate.split('-')[2]}일 내역</h4>
+            {selTx.length>0 && <span className="text-xs font-bold text-red-400">{hideAmounts?'•••••':formatFullKRW(selTx.filter(t=>!t.refunded).reduce((s,t)=>s+t.amount,0))}</span>}
+          </div>
           {selTx.length > 0
             ? selTx.map(tx => <TxRow key={tx.id} tx={tx} hideAmounts={hideAmounts} customCategories={customCategories} onDelete={deleteTransaction} />)
-            : <div className="text-sm text-c-text3 text-center py-4">내역 없음</div>}
+            : <div className="text-sm text-c-text3 text-center py-6">소비가 없는 날이에요</div>}
         </div>
       )}
     </div>
