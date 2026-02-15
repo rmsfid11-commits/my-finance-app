@@ -40,7 +40,7 @@ function EditableNumber({ value, onSave, format, className = '' }) {
         onChange={e => setInputValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className="!w-28 !py-1.5 !px-2 !text-sm !rounded-lg text-center font-semibold !bg-[#0D1117] !border-[#3182F6] !text-white"
+        className="!w-28 !py-1.5 !px-2 !text-sm !rounded-lg text-center font-semibold !border-[#3182F6] !bg-transparent !text-c-text"
         style={{ boxShadow: '0 0 0 3px rgba(49,130,246,0.15)' }}
       />
     );

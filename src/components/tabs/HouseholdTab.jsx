@@ -101,7 +101,7 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
         {subTab==='calendar' && <CalendarView {...sharedProps} />}
         {subTab==='daily' && <DailyView budget={budget} {...sharedProps} />}
         {subTab==='search' && <SearchView {...sharedProps} />}
-        {subTab==='weekly' && <WeeklyView transactions={transactions} budget={budget} hideAmounts={hideAmounts} />}
+        {subTab==='weekly' && <WeeklyView transactions={transactions} budget={budget} hideAmounts={hideAmounts} profile={profile} />}
         {subTab==='monthly' && <MonthlyView transactions={transactions} budget={budget} setBudget={setBudget} profile={profile} fixedExpenses={fixedExpenses} hideAmounts={hideAmounts} customCategories={customCategories} catNames={catNames} />}
         {subTab==='compare' && <CompareView transactions={transactions} hideAmounts={hideAmounts} customCategories={customCategories} />}
         {subTab==='yearly' && <YearlyView transactions={transactions} hideAmounts={hideAmounts} />}
@@ -412,7 +412,7 @@ function SearchView({ transactions, deleteTransaction, updateTransaction, hideAm
 }
 
 /* ─── WeeklyView ─── */
-function WeeklyView({ transactions, budget, hideAmounts }) {
+function WeeklyView({ transactions, budget, hideAmounts, profile }) {
   const weekData = useMemo(() => {
     const days=[], now=new Date(), dow=now.getDay(), mon=new Date(now);
     mon.setDate(now.getDate()-(dow===0?6:dow-1));
@@ -433,7 +433,7 @@ function WeeklyView({ transactions, budget, hideAmounts }) {
         <div className="h-44"><ResponsiveContainer width="100%" height="100%"><BarChart data={weekData}><XAxis dataKey="day" tick={{fontSize:12,fill:'#8B949E'}} axisLine={false} tickLine={false}/><YAxis width={50} tick={{fontSize:10,fill:'#8B949E'}} tickFormatter={v=>formatKRW(v)} axisLine={false} tickLine={false}/><Tooltip content={<CustomTooltip formatter={v=>formatFullKRW(v)}/>}/><Bar dataKey="amount" fill="#FF4757" radius={[8,8,0,0]}/></BarChart></ResponsiveContainer></div>
       </div>
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
-        <h3 className="font-bold text-sm mb-2">또래 비교 (35세 간호사)</h3>
+        <h3 className="font-bold text-sm mb-2">또래 비교 ({profile.age}세 {profile.job || '직장인'})</h3>
         <div className="flex justify-between text-sm"><span>내 주간 지출</span><span className="font-bold">{hideAmounts?'•••••':formatKRW(weekTotal)}</span></div>
         <div className="flex justify-between text-sm"><span>또래 평균</span><span className="font-semibold">{hideAmounts?'•••••':formatKRW(peerAvg)}</span></div>
         <div className={`text-xs mt-2 font-semibold ${weekTotal<peerAvg?'text-green-300':'text-red-300'}`}>{hideAmounts?'•••••':(weekTotal<peerAvg?`또래보다 ${formatFullKRW(peerAvg-weekTotal)} 적게 쓰고 있어요!`:`또래보다 ${formatFullKRW(weekTotal-peerAvg)} 더 쓰고 있어요`)}</div>
@@ -491,7 +491,7 @@ function MonthlyView({ transactions, budget, setBudget, profile, fixedExpenses, 
         <div className="space-y-3">{catBreakdown.map(c=><div key={c.name} className="border-b border-c-border pb-3"><div className="flex justify-between items-center mb-2"><span className="text-base font-medium text-c-text">{c.name}</span><span className="text-base font-bold text-c-text">{hideAmounts?'•••••':formatFullKRW(c.value)}</span></div>{c.budget>0&&<><div className="progress-bar"><div className={`progress-fill ${parseInt(c.usage)>100?'bg-red-500':parseInt(c.usage)>80?'bg-yellow-500':'bg-green-500'}`} style={{width:`${Math.min(parseInt(c.usage)||0,100)}%`}}/></div><div className="flex justify-between text-sm text-c-text2 mt-1.5"><span>예산 <EditableNumber value={c.budget} onSave={(v)=>setBudget(prev=>({...prev,[c.name]:Math.round(v)}))} format={formatFullKRW}/></span><span className={parseInt(c.usage)>100?'text-red-500 font-bold':''}>{hideAmounts?'•••••':`${c.usage}%`}</span></div></>}</div>)}</div>
       </div>
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
-        <h3 className="font-bold text-sm mb-3">또래 비교 (35세 간호사 600명)</h3>
+        <h3 className="font-bold text-sm mb-3">또래 비교 ({profile.age}세 {profile.job || '직장인'} 600명)</h3>
         <div className="grid grid-cols-2 gap-3"><div className="bg-white/20 rounded-lg p-3 text-center"><div className="text-xs opacity-80">내 저축률</div><div className="text-xl font-bold">{hideAmounts?'•••••':`${savingRate}%`}</div></div><div className="bg-white/20 rounded-lg p-3 text-center"><div className="text-xs opacity-80">또래 평균</div><div className="text-xl font-bold">{hideAmounts?'•••••':`${peerStats.avgRate}%`}</div></div></div>
         <div className="mt-3 bg-white/10 rounded-lg p-3 text-center"><div className="text-sm">이긴 사람: <span className="font-bold text-yellow-300">{peerStats.betterThan}명</span> | 위: <span className="font-bold">{peerStats.worseThan}명</span></div><div className="text-xs opacity-70 mt-1">상위 {((peerStats.worseThan/600)*100).toFixed(0)}%</div></div>
       </div>

@@ -48,7 +48,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const load = async () => { const prices = {}; for (const s of portfolio) { const d = await fetchStockPrice(s.symbol); if (d) prices[s.symbol] = d; } setStockPrices(prices); };
+    const load = async () => { const results = await Promise.allSettled(portfolio.map(s => fetchStockPrice(s.symbol))); const prices = {}; portfolio.forEach((s, i) => { if (results[i].status === 'fulfilled' && results[i].value) prices[s.symbol] = results[i].value; }); setStockPrices(prices); };
     load(); const interval = setInterval(load, 30000); return () => clearInterval(interval);
   }, [portfolio]);
 

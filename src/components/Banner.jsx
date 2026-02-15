@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { formatPercent } from '../utils/formatters';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function Banner({ marketData, exchangeRate }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const items = [
+  const items = useMemo(() => [
     { label: 'S&P 500', value: marketData?.sp500?.price?.toLocaleString('en-US', { maximumFractionDigits: 2 }), change: marketData?.sp500?.changePercent, loaded: !!marketData?.sp500 },
     { label: 'NASDAQ', value: marketData?.nasdaq?.price?.toLocaleString('en-US', { maximumFractionDigits: 2 }), change: marketData?.nasdaq?.changePercent, loaded: !!marketData?.nasdaq },
     { label: 'KOSPI', value: marketData?.kospi?.price?.toLocaleString('ko-KR', { maximumFractionDigits: 2 }), change: marketData?.kospi?.changePercent, loaded: !!marketData?.kospi },
     { label: 'USD/KRW', value: exchangeRate ? `₩${exchangeRate.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}` : null, change: null, loaded: !!exchangeRate },
     { label: 'Bitcoin', value: marketData?.btc?.price ? `$${marketData.btc.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : null, change: marketData?.btc?.changePercent, loaded: !!marketData?.btc }
-  ];
+  ], [marketData, exchangeRate]);
 
   useEffect(() => { const t = setInterval(() => setCurrentIndex(p => (p + 1) % items.length), 3000); return () => clearInterval(t); }, [items.length]);
 

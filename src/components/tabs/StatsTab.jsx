@@ -7,7 +7,6 @@ import EditableNumber from '../EditableNumber';
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Flame, Calendar, Target, Shield, Zap, PieChart as PieIcon, Activity, BarChart3, Users, Wallet, AlertTriangle, Sparkles } from 'lucide-react';
 
 const LINE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3'];
-const PIE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC'];
 const getCatColor = (cats, name) => cats?.find(c => c.name === name)?.color || CATEGORY_COLORS?.[name] || '#8B95A1';
 
 function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, stockPrices, exchangeRate, dividends, fixedExpenses, hideAmounts, customCategories }) {

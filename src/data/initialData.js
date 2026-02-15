@@ -108,17 +108,19 @@ export const BADGE_REWARDS = [
 ];
 
 export const PEER_DATA = generatePeerData();
+function seededRandom(seed) { let s = seed; return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; }; }
 function generatePeerData() {
+  const rand = seededRandom(42);
   const data = [];
   for (let i = 0; i < 600; i++) {
-    const salary = 5000000 + Math.random() * 3000000;
-    const savingRate = 15 + Math.random() * 40;
+    const salary = 5000000 + rand() * 3000000;
+    const savingRate = 15 + rand() * 40;
     const totalExpense = salary * (1 - savingRate / 100);
     data.push({ id: i, salary: Math.round(salary), savingRate: Math.round(savingRate * 10) / 10, totalExpense: Math.round(totalExpense),
-      food: Math.round(totalExpense * (0.25 + Math.random() * 0.15)), transport: Math.round(totalExpense * (0.05 + Math.random() * 0.1)),
-      living: Math.round(totalExpense * (0.1 + Math.random() * 0.1)), medical: Math.round(totalExpense * (0.02 + Math.random() * 0.05)),
-      leisure: Math.round(totalExpense * (0.05 + Math.random() * 0.1)), pet: Math.round(Math.random() > 0.5 ? totalExpense * (0.03 + Math.random() * 0.05) : 0),
-      netWorth: Math.round(10000000 + Math.random() * 150000000) });
+      food: Math.round(totalExpense * (0.25 + rand() * 0.15)), transport: Math.round(totalExpense * (0.05 + rand() * 0.1)),
+      living: Math.round(totalExpense * (0.1 + rand() * 0.1)), medical: Math.round(totalExpense * (0.02 + rand() * 0.05)),
+      leisure: Math.round(totalExpense * (0.05 + rand() * 0.1)), pet: Math.round(rand() > 0.5 ? totalExpense * (0.03 + rand() * 0.05) : 0),
+      netWorth: Math.round(10000000 + rand() * 150000000) });
   }
   return data;
 }
@@ -132,5 +134,14 @@ export const ECONOMIC_CALENDAR = [
   { date: '2026-02-21', time: '23:45', name: 'PMI (구매관리자지수)', importance: 4, forecast: '51.5', previous: '51.2', impact: '제조업/서비스업 경기 판단. 50 이상이면 확장, 이하면 위축. 경기 방향성의 핵심 선행지표.' },
   { date: '2026-02-25', time: '00:00', name: 'CB 소비자 신뢰지수', importance: 4, forecast: '105.0', previous: '104.1', impact: '소비자의 경기 체감도. 높으면 소비 증가 기대로 소비재·유통주 상승, 낮으면 경기 침체 우려.' },
   { date: '2026-02-27', time: '22:30', name: 'GDP (2차 추정)', importance: 5, forecast: '3.2%', previous: '3.3%', impact: '경제 성장률. 예상보다 높으면 기업 실적 기대로 주식 상승, 하지만 과열이면 금리 인상 우려도.' },
-  { date: '2026-02-28', time: '22:30', name: 'PCE 물가지수', importance: 5, forecast: '2.5%', previous: '2.6%', impact: '연준의 공식 물가 목표 지표 (목표 2%). 연준 금리 결정에 가장 직접적 영향. 2%에 근접할수록 금리 인하 기대.' }
+  { date: '2026-02-28', time: '22:30', name: 'PCE 물가지수', importance: 5, forecast: '2.5%', previous: '2.6%', impact: '연준의 공식 물가 목표 지표 (목표 2%). 연준 금리 결정에 가장 직접적 영향. 2%에 근접할수록 금리 인하 기대.' },
+  { date: '2026-03-06', time: '22:30', name: '비농업 고용지수 (NFP)', importance: 5, forecast: '185K', previous: '175K', impact: '미국 고용 상황의 핵심 지표. 예상보다 높으면 경기 과열 → 금리 인상 우려, 낮으면 경기 둔화 → 위험자산 상승.' },
+  { date: '2026-03-06', time: '22:30', name: '실업률', importance: 4, forecast: '4.0%', previous: '4.0%', impact: '노동시장 건강 지표. 상승하면 경기 침체 신호이나 금리 인하 기대로 주식 반등 가능.' },
+  { date: '2026-03-12', time: '22:30', name: 'CPI (소비자물가지수)', importance: 5, forecast: '2.7%', previous: '2.8%', impact: '물가 상승률 지표. 예상보다 높으면 금리 인상 우려로 주식/코인 하락, 달러 강세.' },
+  { date: '2026-03-12', time: '22:30', name: 'Core CPI', importance: 4, forecast: '3.0%', previous: '3.1%', impact: '식품·에너지 제외 핵심 물가. 연준 정책 결정의 핵심 변수.' },
+  { date: '2026-03-19', time: '03:00', name: 'FOMC 금리 결정', importance: 5, forecast: '4.50%', previous: '4.50%', impact: '연준 기준금리 결정. 동결/인하/인상 여부와 점도표, 파월 기자회견이 핵심.' },
+  { date: '2026-03-20', time: '22:30', name: '신규 실업수당 청구건수', importance: 3, forecast: '210K', previous: '215K', impact: '주간 고용 지표. 증가 시 경기 둔화, 감소 시 고용 견조.' },
+  { date: '2026-03-24', time: '23:45', name: 'PMI (구매관리자지수)', importance: 4, forecast: '52.0', previous: '51.5', impact: '경기 확장/위축 판단. 50 이상 확장, 이하 위축.' },
+  { date: '2026-03-28', time: '22:30', name: 'PCE 물가지수', importance: 5, forecast: '2.4%', previous: '2.5%', impact: '연준 공식 물가 지표. 2% 목표 접근 시 금리 인하 기대 강화.' },
+  { date: '2026-03-31', time: '00:00', name: 'CB 소비자 신뢰지수', importance: 4, forecast: '106.0', previous: '105.0', impact: '소비 심리 지표. 높으면 소비 증가 기대, 낮으면 경기 둔화 우려.' }
 ];
