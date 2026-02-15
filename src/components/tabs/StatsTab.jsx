@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { formatKRW, formatFullKRW } from '../../utils/formatters';
-import { PEER_DATA, CATEGORY_COLORS } from '../../data/initialData';
+import { CATEGORY_COLORS } from '../../data/initialData';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PieChart, Pie, Cell } from 'recharts';
 import CustomTooltip from '../CustomTooltip';
 import EditableNumber from '../EditableNumber';
-import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Flame, Calendar, Target, Shield, Zap, PieChart as PieIcon, Activity, BarChart3, Users, Wallet, AlertTriangle, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Flame, Calendar, Target, Shield, Zap, PieChart as PieIcon, Activity, BarChart3, Wallet, AlertTriangle, Sparkles } from 'lucide-react';
 
 const LINE_COLORS = ['#3182F6','#00C48C','#FF9F43','#7C5CFC','#FF4757','#0ABDE3'];
 const getCatColor = (cats, name) => cats?.find(c => c.name === name)?.color || CATEGORY_COLORS?.[name] || '#8B95A1';
@@ -16,7 +16,7 @@ function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, s
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedHighlight, setSelectedHighlight] = useState(null);
   const [selectedBudgetCat, setSelectedBudgetCat] = useState(null);
-  const [selectedPeer, setSelectedPeer] = useState(null);
+
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [selectedWaste, setSelectedWaste] = useState(null);
 
@@ -189,48 +189,6 @@ function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, s
     return { data, cats };
   }, [transactions, monthTx]);
 
-  // ─── 또래 비교 ───
-  const peer = useMemo(() => {
-    const bt = PEER_DATA.filter(p => p.savingRate < savingRate).length;
-    const avgSR = PEER_DATA.reduce((s, p) => s + p.savingRate, 0) / PEER_DATA.length;
-    const dist = [
-      { range: '10-15%', count: PEER_DATA.filter(p => p.savingRate >= 10 && p.savingRate < 15).length },
-      { range: '15-20%', count: PEER_DATA.filter(p => p.savingRate >= 15 && p.savingRate < 20).length },
-      { range: '20-25%', count: PEER_DATA.filter(p => p.savingRate >= 20 && p.savingRate < 25).length },
-      { range: '25-30%', count: PEER_DATA.filter(p => p.savingRate >= 25 && p.savingRate < 30).length },
-      { range: '30-35%', count: PEER_DATA.filter(p => p.savingRate >= 30 && p.savingRate < 35).length },
-      { range: '35-40%', count: PEER_DATA.filter(p => p.savingRate >= 35 && p.savingRate < 40).length },
-      { range: '40-45%', count: PEER_DATA.filter(p => p.savingRate >= 40 && p.savingRate < 45).length },
-      { range: '45%+', count: PEER_DATA.filter(p => p.savingRate >= 45).length },
-    ];
-    const avgExp = PEER_DATA.reduce((s, p) => s + p.totalExpense, 0) / PEER_DATA.length;
-    return { myRank: 600 - bt, betterThan: bt, avgSR: avgSR.toFixed(1), dist, avgExp };
-  }, [savingRate]);
-
-  // ─── 또래 순위 변화 ───
-  const rankTrend = useMemo(() => {
-    const r = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(); d.setMonth(d.getMonth() - i);
-      const mo = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const moSpend = transactions.filter(t => t.date.startsWith(mo) && !t.refunded).reduce((s, t) => s + t.amount, 0) + fixedTotal;
-      const moSR = profile.salary > 0 ? (profile.salary - moSpend) / profile.salary * 100 : 0;
-      r.push({ month: `${d.getMonth() + 1}월`, rank: 600 - PEER_DATA.filter(p => p.savingRate < moSR).length, savingRate: moSR.toFixed(1) });
-    }
-    return r;
-  }, [transactions, fixedTotal, profile.salary]);
-
-  // ─── 카테고리별 또래 비교 ───
-  const catPeerCompare = useMemo(() => {
-    const cs = {}; monthTx.forEach(t => { cs[t.category] = (cs[t.category] || 0) + t.amount; });
-    const peerAvg = peer.avgExp;
-    const totalCat = Object.values(cs).reduce((s, v) => s + v, 0) || 1;
-    return Object.entries(cs).map(([cat, amt]) => {
-      const pa = Math.round(peerAvg * (amt / totalCat) * 0.95);
-      const txList = monthTx.filter(t => t.category === cat).sort((a, b) => b.amount - a.amount);
-      return { cat, mine: amt, peer: pa, diff: amt - pa, txList };
-    }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
-  }, [monthTx, peer.avgExp]);
 
   // ─── 월별 분석 ───
   const monthlyTrend = useMemo(() => {
@@ -672,102 +630,6 @@ function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, s
           </div>
           <div className="border-t border-c-border mx-5" />
         </>)}
-
-        {/* ━━━ 카테고리별 또래 비교 ━━━ */}
-        {catPeerCompare.length > 0 && (<>
-          <SectionHeader id="catPeer" icon={Users} title="카테고리별 또래 비교" />
-          <div className="px-5 pb-4">
-            <div className="space-y-2.5">
-              {catPeerCompare.slice(0, 6).map(c => (
-                <div key={c.cat}>
-                  <button onClick={() => setSelectedPeer(selectedPeer === c.cat ? null : c.cat)} className="w-full text-left active:opacity-70 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs w-12 text-c-text2 font-medium truncate">{c.cat}</span>
-                      <div className="flex-1 flex items-center gap-1.5">
-                        <div className="flex-1 h-4 glass-inner rounded-full overflow-hidden relative">
-                          <div className="h-full bg-[#3182F6] rounded-full" style={{ width: `${Math.min(c.mine / (Math.max(c.mine, c.peer) || 1) * 100, 100)}%` }} />
-                        </div>
-                        <div className="flex-1 h-4 glass-inner rounded-full overflow-hidden">
-                          <div className="h-full bg-[#8B95A1] rounded-full" style={{ width: `${Math.min(c.peer / (Math.max(c.mine, c.peer) || 1) * 100, 100)}%` }} />
-                        </div>
-                      </div>
-                      <span className={`text-[11px] font-bold w-14 text-right ${c.diff > 0 ? 'text-[#FF4757]' : 'text-[#00C48C]'}`}>{H(c.diff > 0 ? `+${formatKRW(c.diff)}` : formatKRW(c.diff))}</span>
-                    </div>
-                  </button>
-                  {selectedPeer === c.cat && (
-                    <div className="mt-1 glass-inner rounded-xl p-3 animate-fade">
-                      <div className="flex justify-between text-xs mb-2">
-                        <span className="text-c-text2">내 지출: <span className="font-bold text-[#3182F6]">{H(formatFullKRW(c.mine))}</span></span>
-                        <span className="text-c-text2">또래 평균: <span className="font-bold text-[#8B95A1]">{H(formatFullKRW(c.peer))}</span></span>
-                      </div>
-                      {renderTxList(c.txList, 5)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-2 text-[11px] text-c-text3"><span className="flex items-center gap-1"><span className="w-2.5 h-0.5 bg-[#3182F6] rounded" />나</span><span className="flex items-center gap-1"><span className="w-2.5 h-0.5 bg-[#8B95A1] rounded" />또래</span></div>
-          </div>
-          <div className="border-t border-c-border mx-5" />
-        </>)}
-
-        {/* ━━━ 또래 비교 ━━━ */}
-        <SectionHeader id="peer" icon={Users} title="또래 비교" badge={`상위 ${Math.round(peer.myRank / 6)}%`} badgeColor="#FF9F43" />
-        <div className="px-5 pb-4">
-          <div className="text-xs text-c-text2 mb-3">{profile.age}세 {profile.job || '직장인'} 600명 기준</div>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">내 저축률</div><div className="text-xl font-bold">{H(`${savingRate.toFixed(1)}%`)}</div></div>
-            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">또래 평균</div><div className="text-xl font-bold">{H(`${peer.avgSR}%`)}</div></div>
-            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">순위</div><div className="text-xl font-bold">{H(`${peer.myRank}위`)}</div></div>
-          </div>
-          <div className="glass-inner rounded-2xl p-3 text-center text-sm"><span>이긴 사람: </span><span className="font-bold text-[#FF9F43]">{H(`${peer.betterThan}명`)}</span><span className="mx-2">|</span><span>위: </span><span className="font-bold">{H(`${600 - peer.betterThan}명`)}</span></div>
-        </div>
-        {expanded === 'peer' && (
-          <div className="px-5 pb-4 animate-fade">
-            <div className="text-xs font-bold text-c-text mb-2">저축률 분포</div>
-            <div className="h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={peer.dist}>
-                  <XAxis dataKey="range" tick={{ fontSize: 9, fill: 'var(--c-text3)' }} axisLine={false} tickLine={false} />
-                  <YAxis width={30} tick={{ fontSize: 9, fill: 'var(--c-text3)' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip formatter={v => `${v}명`} />} />
-                  <Bar dataKey="count" fill="#93C5FD" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        <div className="border-t border-c-border mx-5" />
-
-        {/* ━━━ 또래 순위 변화 ━━━ */}
-        <SectionHeader id="rankTrend" icon={TrendingDown} title="순위 변화 추이" />
-        <div className="px-5 pb-4">
-          <div className="h-36">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={rankTrend}>
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--c-text3)' }} axisLine={false} tickLine={false} />
-                <YAxis width={40} reversed tick={{ fontSize: 10, fill: 'var(--c-text3)' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip formatter={v => `${v}위`} />} />
-                <Line type="monotone" dataKey="rank" stroke="#FF9F43" strokeWidth={2.5} dot={{ r: 4, fill: '#FF9F43', stroke: 'var(--c-bg)', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        {expanded === 'rankTrend' && (
-          <div className="px-5 pb-4 animate-fade">
-            <div className="space-y-1.5">
-              {rankTrend.map((r, i) => (
-                <div key={r.month} className="flex items-center gap-2 text-xs">
-                  <span className="w-8 text-c-text2">{r.month}</span>
-                  <span className="font-bold text-c-text">{r.rank}위</span>
-                  <span className="text-c-text3">저축률 {H(`${r.savingRate}%`)}</span>
-                  {i > 0 && <span className={rankTrend[i].rank < rankTrend[i - 1].rank ? 'text-[#00C48C]' : rankTrend[i].rank > rankTrend[i - 1].rank ? 'text-[#FF4757]' : 'text-c-text3'}>{rankTrend[i].rank < rankTrend[i - 1].rank ? '↑' : rankTrend[i].rank > rankTrend[i - 1].rank ? '↓' : '→'}</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="border-t border-c-border mx-5" />
 

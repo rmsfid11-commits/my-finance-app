@@ -107,23 +107,6 @@ export const BADGE_REWARDS = [
   { count: 50, reward: '평생 프리미엄' }
 ];
 
-export const PEER_DATA = generatePeerData();
-function seededRandom(seed) { let s = seed; return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; }; }
-function generatePeerData() {
-  const rand = seededRandom(42);
-  const data = [];
-  for (let i = 0; i < 600; i++) {
-    const salary = 5000000 + rand() * 3000000;
-    const savingRate = 15 + rand() * 40;
-    const totalExpense = salary * (1 - savingRate / 100);
-    data.push({ id: i, salary: Math.round(salary), savingRate: Math.round(savingRate * 10) / 10, totalExpense: Math.round(totalExpense),
-      food: Math.round(totalExpense * (0.25 + rand() * 0.15)), transport: Math.round(totalExpense * (0.05 + rand() * 0.1)),
-      living: Math.round(totalExpense * (0.1 + rand() * 0.1)), medical: Math.round(totalExpense * (0.02 + rand() * 0.05)),
-      leisure: Math.round(totalExpense * (0.05 + rand() * 0.1)), pet: Math.round(rand() > 0.5 ? totalExpense * (0.03 + rand() * 0.05) : 0),
-      netWorth: Math.round(10000000 + rand() * 150000000) });
-  }
-  return data;
-}
 
 export const ECONOMIC_CALENDAR = [
   { date: '2026-02-14', time: '22:30', name: 'CPI (소비자물가지수)', importance: 5, forecast: '2.8%', previous: '2.9%', impact: '물가 상승률 지표. 예상보다 높으면 금리 인상 우려로 주식/코인 하락, 달러 강세. 낮으면 금리 인하 기대로 위험자산 상승.' },
