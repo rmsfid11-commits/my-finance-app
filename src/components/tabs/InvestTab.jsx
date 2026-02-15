@@ -357,8 +357,8 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
       )}
 
       {showSearch && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
-          <div className="glass rounded-3xl border border-c-glass-border p-6 w-full max-w-[640px] animate-slide max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-[100]" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
+          <div className="glass rounded-t-3xl border-t border-c-glass-border p-6 w-full max-w-[640px] animate-slide max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg text-c-text">종목 검색</h3>
@@ -368,7 +368,7 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text3" />
               <input type="text" value={searchQuery} onChange={e => handleSearch(e.target.value)} placeholder="티커 또는 종목명 (예: AAPL, Tesla)" className="pl-10" autoFocus />
             </div>
-            <div className="overflow-y-auto flex-1 space-y-1.5">
+            <div className="overflow-y-auto flex-1 space-y-1.5 pb-[env(safe-area-inset-bottom)]">
               {searching && <div className="text-center py-8 text-c-text2 text-sm">검색중...</div>}
               {!searching && searchQuery && searchResults.length === 0 && <div className="text-center py-8 text-c-text2 text-sm">검색 결과 없음</div>}
               {!searching && searchResults.map(r => {
@@ -398,8 +398,8 @@ function PortfolioSection({ portfolio, setPortfolio, stockPrices, exchangeRate, 
       )}
 
       {showTradeModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShowTradeModal(null)}>
-          <div className="glass rounded-3xl border border-c-glass-border p-6 w-full max-w-[640px] animate-slide" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-[100]" onClick={() => setShowTradeModal(null)}>
+          <div className="glass rounded-t-3xl border-t border-c-glass-border p-6 w-full max-w-[640px] animate-slide" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
             <h3 className="font-bold text-lg mb-4 text-c-text">{showTradeModal} 거래</h3>
             <div className="space-y-3">
@@ -710,8 +710,8 @@ function WatchlistSection({ watchlist, setWatchlist, exchangeRate, hideAmounts }
       )}
 
       {showSearch && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
-          <div className="glass rounded-3xl border border-c-glass-border p-6 w-full max-w-[640px] animate-slide max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-[100]" onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}>
+          <div className="glass rounded-t-3xl border-t border-c-glass-border p-6 w-full max-w-[640px] animate-slide max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-c-subtle rounded-full mx-auto mb-4" />
             <h3 className="font-bold text-lg text-c-text mb-4">관심종목 검색</h3>
             <div className="relative mb-4">
