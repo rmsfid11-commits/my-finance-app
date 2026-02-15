@@ -58,84 +58,100 @@ function StatsTab({ profile, goals, setGoals, budget, transactions, portfolio, s
   }, [portfolioValue, savings]);
 
   const totalMonthlyDiv = useMemo(() => { const r = dividends.slice(-3); return r.length > 0 ? r.reduce((s, d) => s + d.amount, 0) / r.length : 0; }, [dividends]);
-
   const divGoalYears = totalMonthlyDiv >= goals.dividendGoal ? 0 : ((goals.dividendGoal - totalMonthlyDiv) / (totalMonthlyDiv || 10000) * 2).toFixed(1);
   const nwGoalMonths = useMemo(() => { if (netWorth >= goals.netWorthGoal) return 0; const g = savings + portfolioValue * 0.008; return g <= 0 ? 999 : Math.ceil((goals.netWorthGoal - netWorth) / g); }, [netWorth, goals.netWorthGoal, savings, portfolioValue]);
 
   return (
-    <div className="space-y-4 animate-slide">
-      <div className="glass rounded-3xl p-5 text-c-text">
-        <h2 className="font-bold text-base mb-3">또래 비교</h2>
-        <div className="text-xs text-c-text2 mb-3">{profile.age}세 {profile.job || '직장인'} 600명 기준</div>
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">내 저축률</div><div className="text-xl font-bold">{hideAmounts ? '•••••' : `${savingRate.toFixed(1)}%`}</div></div>
-          <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">또래 평균</div><div className="text-xl font-bold">{hideAmounts ? '•••••' : `${peer.avgSR}%`}</div></div>
-          <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">순위</div><div className="text-xl font-bold">{hideAmounts ? '•••' : `${peer.myRank}위`}</div></div>
-        </div>
-        <div className="glass-inner rounded-2xl p-3 text-center"><span>당신이 이긴 사람: </span><span className="font-bold text-[#FF9F43]">{hideAmounts ? '•••••' : `${peer.betterThan}명`}</span><span className="mx-2">|</span><span>당신보다 위: </span><span className="font-bold">{hideAmounts ? '•••••' : `${600 - peer.betterThan}명`}</span></div>
-      </div>
+    <div className="flex-1 flex flex-col animate-slide">
+      <div className="glass flex-1 flex flex-col">
 
-      <div className="glass rounded-3xl p-5">
-        <h3 className="font-bold text-sm text-c-text mb-4">저축률 분포</h3>
-        <div className="h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={peer.dist}>
-              <XAxis dataKey="range" tick={{fontSize: 10, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
-              <YAxis width={35} tick={{fontSize: 10, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip formatter={v => `${v}명`} />} />
-              <Bar dataKey="count" fill="#93C5FD" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* 또래 비교 */}
+        <div className="px-5 py-4">
+          <h2 className="text-sm font-bold text-c-text mb-3">또래 비교</h2>
+          <div className="text-xs text-c-text2 mb-3">{profile.age}세 {profile.job || '직장인'} 600명 기준</div>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">내 저축률</div><div className="text-xl font-bold">{hideAmounts ? '•••••' : `${savingRate.toFixed(1)}%`}</div></div>
+            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">또래 평균</div><div className="text-xl font-bold">{hideAmounts ? '•••••' : `${peer.avgSR}%`}</div></div>
+            <div className="glass-inner rounded-2xl p-3 text-center"><div className="text-xs text-c-text2">순위</div><div className="text-xl font-bold">{hideAmounts ? '•••' : `${peer.myRank}위`}</div></div>
+          </div>
+          <div className="glass-inner rounded-2xl p-3 text-center"><span>당신이 이긴 사람: </span><span className="font-bold text-[#FF9F43]">{hideAmounts ? '•••••' : `${peer.betterThan}명`}</span><span className="mx-2">|</span><span>당신보다 위: </span><span className="font-bold">{hideAmounts ? '•••••' : `${600 - peer.betterThan}명`}</span></div>
         </div>
-      </div>
 
-      <div className="glass rounded-3xl p-5">
-        <h3 className="font-bold text-sm text-c-text mb-4">월별 분석 (6개월)</h3>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyTrend}>
-              <XAxis dataKey="month" tick={{fontSize: 12, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
-              <YAxis width={50} tick={{fontSize: 10, fill: 'var(--c-text3)'}} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} />
-              <Bar dataKey="수입" fill="#00C48C" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="지출" fill="#FF4757" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="저축" fill="#7C5CFC" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex justify-center gap-4 mt-3 text-xs text-c-text2"><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#00C48C] rounded-sm" /> 수입</span><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#FF4757] rounded-sm" /> 지출</span><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7C5CFC] rounded-sm" /> 저축</span></div>
-      </div>
+        <div className="border-t border-c-border mx-5" />
 
-      <div className="glass rounded-3xl p-5">
-        <h3 className="font-bold text-sm text-c-text mb-3">순자산 추이</h3>
-        <div className="text-2xl font-bold text-[#3182F6] mb-4">{hideAmounts ? '•••••' : formatKRW(netWorth)}</div>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={netWorthTrend}>
-              <defs><linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7C5CFC" stopOpacity={0.3}/><stop offset="95%" stopColor="#7C5CFC" stopOpacity={0}/></linearGradient></defs>
-              <XAxis dataKey="month" tick={{fontSize: 12, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
-              <YAxis width={50} tick={{fontSize: 10, fill: 'var(--c-text3)'}} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip formatter={v => formatKRW(v)} />} />
-              <Area type="monotone" dataKey="value" stroke="#7C5CFC" fill="url(#nwGrad)" strokeWidth={2.5} activeDot={{ r: 5, stroke: 'var(--c-bg)', strokeWidth: 2 }} />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* 저축률 분포 */}
+        <div className="px-5 py-4">
+          <h2 className="text-sm font-bold text-c-text mb-4">저축률 분포</h2>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={peer.dist}>
+                <XAxis dataKey="range" tick={{fontSize: 10, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
+                <YAxis width={35} tick={{fontSize: 10, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={v => `${v}명`} />} />
+                <Bar dataKey="count" fill="#93C5FD" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
 
-      <div className="glass rounded-3xl p-5">
-        <h3 className="font-bold text-sm text-c-text mb-5">목표 진행도</h3>
-        <div className="mb-6">
-          <div className="text-sm font-semibold text-c-text mb-2">배당 월 <EditableNumber value={goals.dividendGoal} onSave={(v) => setGoals({...goals, dividendGoal: Math.round(v)})} format={formatKRW} /></div>
-          <div className="flex items-end gap-3 mb-2"><div className="text-2xl font-bold text-green-600">{hideAmounts ? '•••••' : formatKRW(totalMonthlyDiv)}</div><div className="text-sm text-c-text2 mb-1">/ {hideAmounts ? '•••••' : formatKRW(goals.dividendGoal)}</div></div>
-          <div className="relative h-2 glass-inner rounded-full overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400" style={{width:`${Math.min((totalMonthlyDiv/goals.dividendGoal)*100,100)}%`}}><div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" /></div></div>
-          <div className="flex justify-between text-xs text-c-text2 mt-1.5"><span>{hideAmounts ? '•••••' : `${((totalMonthlyDiv/goals.dividendGoal)*100).toFixed(1)}% 달성`}</span><span>예상: {divGoalYears}년 후</span></div>
+        <div className="border-t border-c-border mx-5" />
+
+        {/* 월별 분석 */}
+        <div className="px-5 py-4">
+          <h2 className="text-sm font-bold text-c-text mb-4">월별 분석 (6개월)</h2>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyTrend}>
+                <XAxis dataKey="month" tick={{fontSize: 12, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
+                <YAxis width={50} tick={{fontSize: 10, fill: 'var(--c-text3)'}} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={v => formatFullKRW(v)} />} />
+                <Bar dataKey="수입" fill="#00C48C" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="지출" fill="#FF4757" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="저축" fill="#7C5CFC" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-4 mt-3 text-xs text-c-text2"><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#00C48C] rounded-sm" /> 수입</span><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#FF4757] rounded-sm" /> 지출</span><span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7C5CFC] rounded-sm" /> 저축</span></div>
         </div>
-        <div>
-          <div className="text-sm font-semibold text-c-text mb-2">순자산 <EditableNumber value={goals.netWorthGoal} onSave={(v) => setGoals({...goals, netWorthGoal: Math.round(v)})} format={formatKRW} /></div>
-          <div className="flex items-end gap-3 mb-2"><div className="text-2xl font-bold text-[#3182F6]">{hideAmounts ? '•••••' : formatKRW(netWorth)}</div><div className="text-sm text-c-text2 mb-1">/ {hideAmounts ? '•••••' : formatKRW(goals.netWorthGoal)}</div></div>
-          <div className="relative h-2 glass-inner rounded-full overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" style={{width:`${Math.min((netWorth/goals.netWorthGoal)*100,100)}%`}}><div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" /></div></div>
-          <div className="flex justify-between text-xs text-c-text2 mt-1.5"><span>{hideAmounts ? '•••••' : `${((netWorth/goals.netWorthGoal)*100).toFixed(1)}% 달성`}</span><span>예상: {nwGoalMonths}개월 후</span></div>
+
+        <div className="border-t border-c-border mx-5" />
+
+        {/* 순자산 추이 */}
+        <div className="px-5 py-4">
+          <h2 className="text-sm font-bold text-c-text mb-3">순자산 추이</h2>
+          <div className="text-2xl font-bold text-[#3182F6] mb-4">{hideAmounts ? '•••••' : formatKRW(netWorth)}</div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={netWorthTrend}>
+                <defs><linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7C5CFC" stopOpacity={0.3}/><stop offset="95%" stopColor="#7C5CFC" stopOpacity={0}/></linearGradient></defs>
+                <XAxis dataKey="month" tick={{fontSize: 12, fill: 'var(--c-text3)'}} axisLine={false} tickLine={false} />
+                <YAxis width={50} tick={{fontSize: 10, fill: 'var(--c-text3)'}} tickFormatter={v => formatKRW(v)} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={v => formatKRW(v)} />} />
+                <Area type="monotone" dataKey="value" stroke="#7C5CFC" fill="url(#nwGrad)" strokeWidth={2.5} activeDot={{ r: 5, stroke: 'var(--c-bg)', strokeWidth: 2 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
+        <div className="border-t border-c-border mx-5" />
+
+        {/* 목표 진행도 */}
+        <div className="px-5 py-4">
+          <h2 className="text-sm font-bold text-c-text mb-5">목표 진행도</h2>
+          <div className="mb-6">
+            <div className="text-sm font-semibold text-c-text mb-2">배당 월 <EditableNumber value={goals.dividendGoal} onSave={(v) => setGoals({...goals, dividendGoal: Math.round(v)})} format={formatKRW} /></div>
+            <div className="flex items-end gap-3 mb-2"><div className="text-2xl font-bold text-green-600">{hideAmounts ? '•••••' : formatKRW(totalMonthlyDiv)}</div><div className="text-sm text-c-text2 mb-1">/ {hideAmounts ? '•••••' : formatKRW(goals.dividendGoal)}</div></div>
+            <div className="relative h-2 glass-inner rounded-full overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400" style={{width:`${Math.min((totalMonthlyDiv/goals.dividendGoal)*100,100)}%`}}><div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" /></div></div>
+            <div className="flex justify-between text-xs text-c-text2 mt-1.5"><span>{hideAmounts ? '•••••' : `${((totalMonthlyDiv/goals.dividendGoal)*100).toFixed(1)}% 달성`}</span><span>예상: {divGoalYears}년 후</span></div>
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-c-text mb-2">순자산 <EditableNumber value={goals.netWorthGoal} onSave={(v) => setGoals({...goals, netWorthGoal: Math.round(v)})} format={formatKRW} /></div>
+            <div className="flex items-end gap-3 mb-2"><div className="text-2xl font-bold text-[#3182F6]">{hideAmounts ? '•••••' : formatKRW(netWorth)}</div><div className="text-sm text-c-text2 mb-1">/ {hideAmounts ? '•••••' : formatKRW(goals.netWorthGoal)}</div></div>
+            <div className="relative h-2 glass-inner rounded-full overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" style={{width:`${Math.min((netWorth/goals.netWorthGoal)*100,100)}%`}}><div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" /></div></div>
+            <div className="flex justify-between text-xs text-c-text2 mt-1.5"><span>{hideAmounts ? '•••••' : `${((netWorth/goals.netWorthGoal)*100).toFixed(1)}% 달성`}</span><span>예상: {nwGoalMonths}개월 후</span></div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -90,9 +90,9 @@ function HouseholdTab({ profile, goals, budget, setBudget, transactions, fixedEx
         {TAB_ROWS.map(([from,to,cols], ri) => (
           <div key={ri} className={`grid border-b border-c-border ${cols===4?'grid-cols-4':cols===3?'grid-cols-3':'grid-cols-2'}`}>
             {SUB_TABS.slice(from,to).map(({id,label},i) => (
-              <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-base font-bold text-center transition-all relative ${i<to-from-1?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
+              <button key={id} onClick={() => setSubTab(id)} className={`py-7 text-lg font-bold text-center transition-all relative ${i<to-from-1?'border-r border-c-border':''} ${subTab===id?'text-[#3182F6] bg-[#3182F6]/5':'text-c-text3 active:bg-c-subtle'}`}>
                 {label}
-                {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-[#3182F6] rounded-full"/>}
+                {subTab===id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-[#3182F6] rounded-full"/>}
               </button>
             ))}
           </div>

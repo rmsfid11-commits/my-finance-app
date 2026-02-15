@@ -181,9 +181,9 @@ function InvestTab({ portfolio, setPortfolio, stockPrices, exchangeRate, dividen
     <div className="animate-slide">
       <div className="glass flex-1 flex flex-col">
         <div className="p-3">
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-1.5">
             {SUB_TABS.map(({ id, label }) => (
-              <button key={id} onClick={() => setSubTab(id)} className={`py-3 text-sm font-semibold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
+              <button key={id} onClick={() => setSubTab(id)} className={`py-5 text-base font-bold rounded-xl transition-all ${subTab === id ? 'bg-[#3182F6] text-white shadow-md shadow-blue-500/25' : 'text-c-text2 hover:bg-c-bg active:bg-c-bg'}`}>{label}</button>
             ))}
           </div>
         </div>
@@ -511,7 +511,7 @@ function CalcSection() {
   return (
     <>
       <div className="px-5 py-3">
-        <div className="flex gap-1.5 overflow-x-auto">{types.map(c => <button key={c.id} onClick={() => setCalcType(c.id)} className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap font-medium transition-all ${calcType === c.id ? 'bg-[#3182F6] text-white' : 'text-c-text2'}`}>{c.label}</button>)}</div>
+        <div className="flex gap-1.5 overflow-x-auto">{types.map(c => <button key={c.id} onClick={() => setCalcType(c.id)} className={`px-5 py-3 rounded-xl text-base whitespace-nowrap font-bold transition-all ${calcType === c.id ? 'bg-[#3182F6] text-white' : 'text-c-text2'}`}>{c.label}</button>)}</div>
       </div>
       <div className="border-t border-c-border mx-5" />
       {calcType === 'compound' && <CompoundCalc />}
