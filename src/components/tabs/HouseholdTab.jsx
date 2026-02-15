@@ -157,8 +157,7 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
           {customQuickInputs.map((item,idx) => (
             <div key={`${item.label}-${idx}`} className="relative">
               <button onClick={() => !editMode && handleQuick(item)} className={`w-full rounded-2xl py-8 px-5 text-center transition-all border border-c-border ${editMode ? 'opacity-80' : 'hover:bg-c-subtle active:scale-95'}`}>
-                <div className="text-4xl mb-3">{item.icon}</div>
-                <div className="text-lg font-bold text-c-text mb-1.5">{item.label}</div>
+                <div className="text-lg font-bold text-c-text mb-1.5"><span className="text-sm mr-1">{item.icon}</span>{item.label}</div>
                 <div className="text-base text-c-text2">{hideAmounts ? '•••••' : formatFullKRW(item.amount)}</div>
               </button>
               {editMode && <button onClick={() => setCustomQuickInputs(p=>p.filter((_,i)=>i!==idx))} className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md"><X size={16}/></button>}
