@@ -123,25 +123,25 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
             <Pencil size={18} />
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {customQuickInputs.map((item, idx) => (
             <div key={`${item.label}-${idx}`} className="relative">
-              <button onClick={() => !editMode && handleQuick(item)} className={`w-full rounded-2xl p-5 text-center transition-all border border-c-border ${editMode ? 'opacity-80' : 'hover:bg-c-subtle active:scale-95'}`}>
-                <div className="text-2xl mb-2">{item.icon}</div>
-                <div className="text-sm font-semibold text-c-text mb-1">{item.label}</div>
-                <div className="text-xs text-c-text2">{hideAmounts ? '•••••' : formatFullKRW(item.amount)}</div>
+              <button onClick={() => !editMode && handleQuick(item)} className={`w-full rounded-2xl py-8 px-5 text-center transition-all border border-c-border ${editMode ? 'opacity-80' : 'hover:bg-c-subtle active:scale-95'}`}>
+                <div className="text-4xl mb-3">{item.icon}</div>
+                <div className="text-lg font-bold text-c-text mb-1.5">{item.label}</div>
+                <div className="text-base text-c-text2">{hideAmounts ? '•••••' : formatFullKRW(item.amount)}</div>
               </button>
               {editMode && (
-                <button onClick={() => removeQuickItem(idx)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md">
-                  <X size={12} />
+                <button onClick={() => removeQuickItem(idx)} className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center text-sm shadow-md">
+                  <X size={16} />
                 </button>
               )}
             </div>
           ))}
           {editMode && (
-            <button onClick={() => setShowAddItem(!showAddItem)} className="rounded-2xl p-5 text-center border-2 border-dashed border-c-border hover:border-[#3182F6]/50 transition-colors">
-              <Plus size={24} className="mx-auto text-c-text3 mb-2" />
-              <div className="text-sm text-c-text3">추가</div>
+            <button onClick={() => setShowAddItem(!showAddItem)} className="rounded-2xl py-8 px-5 text-center border-2 border-dashed border-c-border hover:border-[#3182F6]/50 transition-colors">
+              <Plus size={32} className="mx-auto text-c-text3 mb-3" />
+              <div className="text-lg text-c-text3">추가</div>
             </button>
           )}
         </div>
@@ -160,11 +160,11 @@ function QuickInput({ addTransaction, hideAmounts, customQuickInputs, setCustomQ
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => setShowManual(!showManual)} className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><Plus size={22} className="text-[#3182F6]" /> 직접 입력</button>
-        <button onClick={() => setShowSMS(!showSMS)} className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><MessageSquare size={22} className="text-green-500" /> SMS 입력</button>
-        <button className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text opacity-50"><Camera size={22} className="text-purple-500" /> 영수증 OCR</button>
-        <button className="flex items-center gap-3 p-5 rounded-2xl border border-c-border text-base font-semibold text-c-text opacity-50"><Mic size={22} className="text-orange-500" /> 음성 입력</button>
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => setShowManual(!showManual)} className="flex items-center justify-center gap-3 py-6 px-5 rounded-2xl border border-c-border text-lg font-bold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><Plus size={26} className="text-[#3182F6]" /> 직접 입력</button>
+        <button onClick={() => setShowSMS(!showSMS)} className="flex items-center justify-center gap-3 py-6 px-5 rounded-2xl border border-c-border text-lg font-bold text-c-text transition-colors hover:border-[#3182F6]/50 active:scale-[0.98]"><MessageSquare size={26} className="text-green-500" /> SMS 입력</button>
+        <button className="flex items-center justify-center gap-3 py-6 px-5 rounded-2xl border border-c-border text-lg font-bold text-c-text opacity-50"><Camera size={26} className="text-purple-500" /> 영수증 OCR</button>
+        <button className="flex items-center justify-center gap-3 py-6 px-5 rounded-2xl border border-c-border text-lg font-bold text-c-text opacity-50"><Mic size={26} className="text-orange-500" /> 음성 입력</button>
       </div>
 
       {showManual && (
