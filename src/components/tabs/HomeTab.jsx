@@ -205,7 +205,7 @@ function HomeTab() {
 
   return (
     <div className="flex-1 flex flex-col animate-slide">
-      <div className="glass flex-1 flex flex-col">
+      <div className="glass flex-1 flex flex-col card-stagger">
 
         {/* ━━━ 스트릭 + 레벨 ━━━ */}
         <div className="px-5 pt-4 pb-3">

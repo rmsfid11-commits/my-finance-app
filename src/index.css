@@ -123,6 +123,70 @@
   --c-input-focus: rgba(140,120,255,0.14);
 }
 
+[data-theme="sunset"] {
+  --c-bg: #0F0A06;
+  --c-bg-gradient: radial-gradient(ellipse at 20% 30%, rgba(255,140,50,0.22) 0%, transparent 55%),
+                    radial-gradient(ellipse at 75% 50%, rgba(255,80,80,0.14) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 85%, rgba(200,100,20,0.16) 0%, transparent 50%);
+  --c-card: rgba(255,140,60,0.05);
+  --c-card-solid: #1A1008;
+  --c-border: rgba(255,140,60,0.10);
+  --c-text: #F5E6D0;
+  --c-text2: #A08060;
+  --c-text3: #604830;
+  --c-subtle: rgba(255,140,60,0.04);
+  --c-glass: rgba(255,150,70,0.10);
+  --c-glass-border: rgba(255,180,100,0.20);
+  --c-glass-shadow: rgba(40,10,0,0.1);
+  --c-glass-highlight: rgba(255,200,120,0.15);
+  --c-glass-touch: rgba(255,180,100,0.08);
+  --c-input-bg: rgba(255,140,60,0.06);
+  --c-input-border: rgba(255,140,60,0.12);
+  --c-input-focus: rgba(255,140,60,0.14);
+}
+[data-theme="neon"] {
+  --c-bg: #050508;
+  --c-bg-gradient: radial-gradient(ellipse at 25% 20%, rgba(0,255,136,0.15) 0%, transparent 55%),
+                    radial-gradient(ellipse at 75% 55%, rgba(180,0,255,0.12) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 85%, rgba(0,200,255,0.10) 0%, transparent 50%);
+  --c-card: rgba(0,255,136,0.04);
+  --c-card-solid: #0A0D0A;
+  --c-border: rgba(0,255,136,0.12);
+  --c-text: #D0FFE0;
+  --c-text2: #50A060;
+  --c-text3: #204030;
+  --c-subtle: rgba(0,255,136,0.03);
+  --c-glass: rgba(0,255,136,0.06);
+  --c-glass-border: rgba(0,255,136,0.18);
+  --c-glass-shadow: rgba(0,20,10,0.2);
+  --c-glass-highlight: rgba(0,255,136,0.10);
+  --c-glass-touch: rgba(0,255,136,0.08);
+  --c-input-bg: rgba(0,255,136,0.05);
+  --c-input-border: rgba(0,255,136,0.15);
+  --c-input-focus: rgba(0,255,136,0.18);
+}
+[data-theme="gold"] {
+  --c-bg: #08070A;
+  --c-bg-gradient: radial-gradient(ellipse at 30% 25%, rgba(200,170,80,0.18) 0%, transparent 55%),
+                    radial-gradient(ellipse at 70% 55%, rgba(180,140,40,0.10) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 85%, rgba(160,120,30,0.12) 0%, transparent 50%);
+  --c-card: rgba(200,170,80,0.05);
+  --c-card-solid: #14120E;
+  --c-border: rgba(200,170,80,0.12);
+  --c-text: #F0E8D0;
+  --c-text2: #9A8A60;
+  --c-text3: #5A4A30;
+  --c-subtle: rgba(200,170,80,0.04);
+  --c-glass: rgba(200,170,80,0.08);
+  --c-glass-border: rgba(220,190,100,0.18);
+  --c-glass-shadow: rgba(20,15,0,0.15);
+  --c-glass-highlight: rgba(240,220,140,0.12);
+  --c-glass-touch: rgba(220,190,100,0.08);
+  --c-input-bg: rgba(200,170,80,0.06);
+  --c-input-border: rgba(200,170,80,0.12);
+  --c-input-focus: rgba(200,170,80,0.16);
+}
+
 @theme {
   --color-primary: #3182F6;
   --color-primary-light: #5B9CF6;
@@ -318,4 +382,92 @@ input::placeholder { color: var(--c-text3); }
 [data-theme="notion"] .led-panel, [data-theme="rose"] .led-panel {
   background-color: rgba(0,0,0,0.03);
   background-image: none;
+}
+
+/* Neon theme: glow accents */
+[data-theme="neon"] .glass {
+  box-shadow: 0 0 20px rgba(0,255,136,0.05), 0 8px 32px var(--c-glass-shadow), inset 0 1px 0 rgba(0,255,136,0.08);
+}
+[data-theme="neon"] .btn-primary {
+  background: linear-gradient(135deg, #00FF88, #00CC6A);
+  box-shadow: 0 0 20px rgba(0,255,136,0.3), 0 4px 16px rgba(0,255,136,0.2);
+  color: #050508;
+}
+[data-theme="neon"] .glass-nav {
+  box-shadow: 0 -2px 20px rgba(0,255,136,0.08);
+}
+
+/* Gold theme: luxury accents */
+[data-theme="gold"] .btn-primary {
+  background: linear-gradient(135deg, #D4A843, #B8922E);
+  box-shadow: 0 4px 20px rgba(200,170,80,0.25);
+  color: #08070A;
+}
+[data-theme="gold"] .glass {
+  box-shadow: 0 0 15px rgba(200,170,80,0.04), 0 8px 32px var(--c-glass-shadow), inset 0 1px 0 rgba(240,220,140,0.08);
+}
+
+/* Sunset theme: warm accents */
+[data-theme="sunset"] .btn-primary {
+  background: linear-gradient(135deg, #FF8C32, #E06420);
+  box-shadow: 0 4px 20px rgba(255,140,50,0.25);
+}
+
+/* Micro interactions */
+.glass {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+.glass:active {
+  transform: scale(0.985);
+}
+
+/* Card hover shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-hover:hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent 0%, var(--c-glass-touch) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Number counter glow */
+@keyframes number-glow {
+  0%, 100% { text-shadow: none; }
+  50% { text-shadow: 0 0 8px currentColor; }
+}
+.number-highlight {
+  animation: number-glow 0.6s ease-out;
+}
+
+/* Smooth card entrance stagger */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-stagger > * {
+  animation: card-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.card-stagger > *:nth-child(1) { animation-delay: 0s; }
+.card-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.card-stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.card-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.card-stagger > *:nth-child(5) { animation-delay: 0.24s; }
+.card-stagger > *:nth-child(6) { animation-delay: 0.30s; }
+
+/* Tab indicator pill */
+@keyframes tab-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.tab-active-indicator {
+  animation: tab-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

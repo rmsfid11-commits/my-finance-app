@@ -4,7 +4,7 @@ import { CATEGORIES } from '../../data/initialData';
 import { useStore } from '../../store/useStore';
 import { haptic } from '../../utils/haptic';
 import PrivacyPolicy from '../PrivacyPolicy';
-import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff, Shield, FileText, BookOpen, History, X } from 'lucide-react';
+import { User, Target, CreditCard, Bell, Database, ChevronRight, Download, Upload, FileSpreadsheet, Trash2, Save, Sun, Moon, Waves, TreePine, Heart, Sparkles, LogOut, Cloud, CloudOff, Shield, FileText, BookOpen, History, X, Flame, Zap, Crown } from 'lucide-react';
 
 function SettingsTab() {
   const { profile, setProfile, goals, setGoals, budget, setBudget, settings, setSettings, transactions, portfolio, dividends, fixedExpenses, badges, theme, setTheme, hideAmounts, setLastBackup, user, handleLogout } = useStore();
@@ -61,6 +61,9 @@ function SettingsTab() {
               { id: 'forest', label: 'Forest', Icon: TreePine, bg: '#0A1A0F', fg: '#D1E8D5' },
               { id: 'rose', label: 'Rose', Icon: Heart, bg: '#FFF5F5', fg: '#1A202C' },
               { id: 'midnight', label: 'Midnight', Icon: Sparkles, bg: '#13111C', fg: '#E0DEF4' },
+              { id: 'sunset', label: 'Sunset', Icon: Flame, bg: 'linear-gradient(135deg,#1A1008,#2A1505)', fg: '#F5E6D0' },
+              { id: 'neon', label: 'Neon', Icon: Zap, bg: '#050508', fg: '#00FF88' },
+              { id: 'gold', label: 'Gold', Icon: Crown, bg: 'linear-gradient(135deg,#14120E,#1A1810)', fg: '#D4A843' },
             ].map(t => (
               <button key={t.id} onClick={() => setTheme(t.id)} className={`flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl text-sm font-semibold transition-all ${theme === t.id ? 'border-2 border-[#3182F6] shadow-lg shadow-blue-500/20' : 'glass-inner'}`} style={theme === t.id ? { background: t.bg, color: t.fg } : {}}>
                 <t.Icon size={18} /> {t.label}

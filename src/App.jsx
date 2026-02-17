@@ -187,9 +187,10 @@ function App() {
       </main>
       <nav ref={navRefEl} className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[960px] glass-nav flex justify-around items-center py-3 px-1 z-50" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
         {TABS.map(({ path, label, Icon }) => (
-          <button key={path} onClick={() => { haptic(); navigate(path); }} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${location.pathname === path ? 'text-[#3182F6]' : 'text-c-text3'}`}>
+          <button key={path} onClick={() => { haptic(); navigate(path); }} className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${location.pathname === path ? 'text-[#3182F6]' : 'text-c-text3'}`}>
             <Icon size={20} strokeWidth={location.pathname === path ? 2.5 : 1.5} />
             <span className={`text-[10px] ${location.pathname === path ? 'font-bold' : 'font-medium'}`}>{label}</span>
+            {location.pathname === path && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-5 h-[3px] rounded-full bg-[#3182F6] tab-active-indicator" />}
           </button>
         ))}
       </nav>
